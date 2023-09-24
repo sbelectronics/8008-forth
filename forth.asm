@@ -720,7 +720,19 @@ rom_start:      call SINIT              ; Initialize serial port
                 jmp init                ; jump to FORTH initialization
 
 ;------------------------------------------------------------------------
-; next - increment program pointer and jump to next
+; next - increment program pointer and jump to next;
+;
+; 1. CUR holds the current element in our body. Dereference it to get
+;    the address of the callee's codeword, and store that in EAX.
+;
+; 2. Dereference the callee's codeword to get the address to jump to
+;
+; 3. Setup the jump pointer for jmpa_jump
+;
+; 4. Move CUR to point to the next codeword in our body
+;
+; 5. Jump
+;
 ;------------------------------------------------------------------------
 
 next:           ;; first setup the indirect jump
@@ -755,6 +767,19 @@ next:           ;; first setup the indirect jump
 
 ;------------------------------------------------------------------------
 ; docol - the interpreter
+;
+; 1. CUR holds the next element in the Caller's body. Push it to the
+;    return stack.
+;
+; 2. Load our codeword address from EAX
+;
+; 3. Increment by 2 to skip the codeword and point to our body
+;
+; 4. Store it back to CUR. CUR now points to the first element in the
+;    callee's body.
+;
+; 5. Call NEXT
+;
 ;------------------------------------------------------------------------
 
 docol:          mvi h,rstackpage
