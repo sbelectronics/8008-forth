@@ -1,0 +1,2 @@
+: whiletest 3 BEGIN [ CHAR X ] LITERAL EMIT 1- DUP 0= UNTIL ; whiletest
+halt

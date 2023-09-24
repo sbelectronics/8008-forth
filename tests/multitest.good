@@ -1,0 +1,113 @@
+
+
+
+8008-Forth by smbaker
+: clearstack s0 @ dsp! ;
+
+( 0100 ) version prstack
+
+0100 
+
+( 0006 ) clearstack 5 1+ prstack
+
+0006 
+
+( 000D ) clearstack 11 2+ prstack
+
+000D 
+
+( 0004 ) clearstack 5 1- prstack
+
+0004 
+
+( 0009 ) clearstack 11 2- prstack
+
+0009 
+
+( 0042 ) clearstack 33 2 * prstack
+
+0042 
+
+( 0010 ) clearstack 33 2 / prstack
+
+0010 
+
+( 0001 ) clearstack 33 2 mod prstack
+
+0001 
+
+( 0 1 0 ) clearstack 1 1 < 1 2 < 2 1 < .S
+0 1 0 
+( 1 0 0 ) clearstack 1 1 > 1 2 > 2 1 > .S
+1 0 0 
+( 0 1 1 ) clearstack 1 1 <= 1 2 <= 2 1 <= .S
+0 1 1 
+( 1 0 1 ) clearstack 1 1 >= 1 2 >= 2 1 >= .S
+1 0 1 
+( 0 1 ) clearstack 1 1 = 1 2 = .S
+0 1 
+( 1 0 ) clearstack 1 1 <> 1 2 <> .S
+1 0 
+( 220 ) hex 1234 4321 and U. decimal
+220 
+( 5335 ) hex 1234 4321 or U. decimal
+5335 
+( 5115 ) hex 1234 4321 xor U. decimal
+5115 
+( EDCB ) hex 1234 invert U. decimal
+EDCB 
+( 0002 ) clearstack : foo 0 if 001 else 002 then ; foo prstack
+
+0002 
+
+( 0001 ) clearstack : bar 1 if 001 else 002 then ; bar prstack
+
+0001 
+
+( XXX ) : whiletest 3 BEGIN [ CHAR X ] LITERAL EMIT 1- DUP 0= UNTIL ; whiletest
+XXX
+( X  Y ) : spacestest [ char x ] LITERAL EMIT 2 SPACES [ char y ] LITERAL EMIT ; spacestest
+x  y
+( 5 4 3 2 1 ) clearstack 1 2 3 4 5 .S
+5 4 3 2 1 
+( sometext ) s" sometext" tell
+sometext
+( moretext ) clearstack : texttest S" moretext" .S TELL ; texttest
+8 1195 moretext
+( directtext ) ." directtext"
+directtext
+( directtextfunc ) : directtexttest ." directtextfunc" .S ; directtexttest
+directtextfunc
+( 10 10 ) 10 constant ten ten ten . .
+10 10 
+( 15 ) variable foo 15 foo ! foo @ .
+15 
+( 20 20 ) 20 VALUE VAL VAL VAL . .
+20 20 
+( 30 30 ) 30 TO VAL VAL VAL . .
+30 30 
+( 0 1 2 3 4 5 6 7 8 9 ) : dotest1 10 0 DO I . LOOP ; dotest1
+0 1 2 3 4 5 6 7 8 9 
+( 0 2 4 6 8 ) : dotest2 10 0 DO I . 2 +LOOP ; dotest2
+0 2 4 6 8 
+( 0 3 6 9 ) : dotest3 10 0 DO I . 3 +LOOP ; dotest3
+0 3 6 9 
+( 20 19 18 17 16 15 14 13 12 11 10 ) : dotest4 10 20 DO I . -1 +LOOP ; dotest4
+20 19 18 17 16 15 14 13 12 11 10 
+( 20 17 14 11 ) : dotest5 10 20 DO I . -3 +LOOP ; dotest5
+20 17 14 11 
+( -5 -6 -7 -8 -9 -10 ) : dotest6 -10 -5 DO I . -1 +LOOP ; dotest6
+-5 -6 -7 -8 -9 -10 
+( -10 -9 -8 -7 -6 ) : dotest7 -5 -10 DO I . LOOP ; dotest7
+-10 -9 -8 -7 -6 
+words
+dotest7 dotest6 dotest5 dotest4 dotest3 dotest2 dotest1 VAL foo ten directtexttest texttest spacestest whiletest bar foo clearstack FORGET WORDS ?HIDDEN ID. TO >DFA VALUE VARIABLE CELLS ALLOT CONSTANT ." S" C, ALIGN ALIGNED DEPTH WITHIN ? U. . .R U.R UWIDTH .S U. HEX DECIMAL SPACES ( UNLES REPEAT WHILE AGAIN UNTIL BEGIN ELSE THEN IF [RECURSE] [COMPILE] LITERAL NOT FALSE TRUE NEGATE SPACE CR BL '"' '-' 'A' '0' ')' '(' '\n' MOD / EXECUTE CHAR INTERPRET I +LOOP LOOP DO BYE PRSTACK PRHEX TELL LITSTRING 0BRANCH BRANCH ' HIDE HIDDEN IMMEDIATE ; : ] [ , CREATE QUIT BASE S0 LATEST HERE STATE CG C! +! @ ! LIT EXIT INVERT XOR OR AND 0< 0> 0= >= > <= < <> = /MOD * - + 2- 2+ 1- 1+ ?DUP 2SWAP 2DUP 2DROP -ROT ROT OVER DUP SWAP DROP WORD EMIT >CFA FIND NUMBER KEY DSP! DSP@ RSP! RSP@ R> >R F_LENMASK F_HIDDEN F_IMMED DOCOL R0 VERSION 
+
+forget spacestest
+
+words
+whiletest bar foo clearstack FORGET WORDS ?HIDDEN ID. TO >DFA VALUE VARIABLE CELLS ALLOT CONSTANT ." S" C, ALIGN ALIGNED DEPTH WITHIN ? U. . .R U.R UWIDTH .S U. HEX DECIMAL SPACES ( UNLES REPEAT WHILE AGAIN UNTIL BEGIN ELSE THEN IF [RECURSE] [COMPILE] LITERAL NOT FALSE TRUE NEGATE SPACE CR BL '"' '-' 'A' '0' ')' '(' '\n' MOD / EXECUTE CHAR INTERPRET I +LOOP LOOP DO BYE PRSTACK PRHEX TELL LITSTRING 0BRANCH BRANCH ' HIDE HIDDEN IMMEDIATE ; : ] [ , CREATE QUIT BASE S0 LATEST HERE STATE CG C! +! @ ! LIT EXIT INVERT XOR OR AND 0< 0> 0= >= > <= < <> = /MOD * - + 2- 2+ 1- 1+ ?DUP 2SWAP 2DUP 2DROP -ROT ROT OVER DUP SWAP DROP WORD EMIT >CFA FIND NUMBER KEY DSP! DSP@ RSP! RSP@ R> >R F_LENMASK F_HIDDEN F_IMMED DOCOL R0 VERSION 
+
+bye
+
+Goodbye

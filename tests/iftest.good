@@ -1,0 +1,13 @@
+
+
+
+8008-Forth by smbaker
+: foo 0 if 001 else 002 then ; foo prstack
+
+0002 0000 
+: bar 1 if 001 else 002 then ; bar prstack
+
+0001 0002 0000 
+halt
+
+Goodbye
