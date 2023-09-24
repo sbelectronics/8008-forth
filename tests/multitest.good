@@ -56,8 +56,20 @@ https://www.smbaker.com/
 1 0 1 
 ( 0 1 ) clearstack 1 1 = 1 2 = .S
 0 1 
+( 0 1 ) clearstack 1000 1000 = 1000 2000 = .S
+0 1 
 ( 1 0 ) clearstack 1 1 <> 1 2 <> .S
 1 0 
+( 1 0 ) clearstack 1000 1000 <> 1000 2000 <> .S
+1 0 
+( 1 0 0 ) clearstack 1 0< 0 0< -1 0< .S
+1 0 0 
+( 1 0 0 ) clearstack 1000 0< 0 0< -1000 0< .S
+1 0 0 
+( 0 0 1 ) clearstack 1 0> 0 0> -1 0> .S
+0 0 1 
+( 0 0 1 ) clearstack 1000 0> 0 0> -1000 0> .S
+0 0 1 
 ( 220 ) hex 1234 4321 and U. decimal
 220 
 ( 5335 ) hex 1234 4321 or U. decimal
