@@ -736,7 +736,7 @@ next:           ;; first setup the indirect jump
                 mov h,m                 ; H has MSB of cur
                 mov l,a                 ; HL now has cur
 
-                m_to_ba                 ; Put (cur) into BA          
+                m_to_ba                 ; BA = address of codeword        
 
                 mvi h,rstackpage
                 mvi l,callee            ; store callee coreword
@@ -744,9 +744,9 @@ next:           ;; first setup the indirect jump
                 inr l
                 mov m,b
 
-                mov l,a                 ; HL = (cur)
+                mov l,a                 ; HL = Address of codeword
                 mov h,b
-                m_to_ba                 ; Put ((cur)) into BA ... this simulates the *(eax)
+                m_to_ba                 ; Dereference the codeword and put into BA ... Jonesforth *(eax)
 
                 mvi h,rstackpage
                 mvi l,jmpa_addr
