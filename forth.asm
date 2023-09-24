@@ -1551,7 +1551,7 @@ code_LT:        e_save
                 mov a,b
                 sbb c           ; A = B - C
                 jm _LT_YES      ; first arg > second arg
-                jmp _LT_NOT     ; they are equal
+                jmp _LT_NOT
 
 _LT_YES:        e_restore
                 pushconst 1
@@ -1570,20 +1570,21 @@ code_LTE:       e_save
                 mov e,a         ; CE = first arg
                 popab           ; BA = second arg
 
-                mov h,a         ; swap A and C
-                mov a,c
-                mov c,h
-
-                mov h,b         ; swap B and E
-                mov b,e
-                mov e,h
+                mov l,a
 
                 sub e           ; A = A - E
                 mov a,b
-                sbb c
-                jm _LTE_NOT      ; first arg > second arg
+                sbb c           ; A = B - C
+                jm _LTE_YES     ; first arg > second arg
 
-                e_restore
+                mov a,l
+                cmp e
+                jnz _LTE_NOT    ; not equal
+                mov a,b
+                cmp c
+                jnz _LTE_NOT    ; not equal
+
+_LTE_YES:       e_restore
                 pushconst 1
                 jmp next
 _LTE_NOT:       e_restore
@@ -1600,26 +1601,24 @@ code_GT:        e_save
                 mov e,a         ; CE = first arg
                 popab           ; BA = second arg
 
-                mov h,a         ; swap A and C
-                mov a,c
-                mov c,h
+                ;; same code as LT, but we swap the args
+                ;; before comparing.
 
-                mov h,b         ; swap B and E
-                mov b,e
+                mov h,a         ; swap A and E
+                mov a,e
                 mov e,h
+
+                mov h,b         ; swap B and C
+                mov b,c
+                mov c,h
 
                 sub e           ; A = A - E
                 mov a,b
                 sbb c
-                jp _GT_NOT      ; first arg <= second arg
 
-;                jnz _GT_YES
-;                mov a,h
-;                cmp e
-;                jnz _GT_YES
-;                jmp _GT_NOT     ; they are equal
-;
-;_GT_YES:       
+                jm _GT_YES
+                jmp _GT_NOT
+_GT_YES:       
                 e_restore
                 pushconst 1
                 jmp next
@@ -1637,30 +1636,36 @@ code_GTE:       e_save
                 mov e,a         ; CE = first arg
                 popab           ; BA = second arg
 
-                mov h,a         ; swap A and C
-                mov a,c
+                ;; same code as LTE, but we swap the args
+                ;; before comparing.
+
+                mov h,a         ; swap A and E
+                mov a,e
+                mov e,h
+
+                mov h,b         ; swap B and C
+                mov b,c
                 mov c,h
 
-                mov h,b         ; swap B and E
-                mov b,e
-                mov e,h
+                mov l,a         ; save A into L for later
 
                 sub e           ; A = A - E
                 mov a,b
-                sbb c
-                jm _GTE_YES     ; first arg > second arg
+                sbb c           ; A = B - C
+                jm _GTE_YES      ; first arg > second arg
 
-                jnz _GTE_NO
-                mov a,h
+                mov a,l
                 cmp e
-                jnz _GTE_NO
-                jmp _GTE_YES     ; they are equal
+                jnz _GTE_NOT    ; not equal
+                mov a,b
+                cmp c
+                jnz _GTE_NOT    ; not equal
 
-_GTE_NO:        e_restore
-                pushconst 0
-                jmp next
 _GTE_YES:       e_restore
                 pushconst 1
+                jmp next
+_GTE_NOT:       e_restore
+                pushconst 0
                 jmp next                
 
 

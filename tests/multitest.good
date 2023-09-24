@@ -44,9 +44,15 @@ https://www.smbaker.com/
 0 1 0 
 ( 1 0 0 ) clearstack 1 1 > 1 2 > 2 1 > .S
 1 0 0 
+( 1 0 0 ) clearstack 1000 1000 > 1000 2000 > 2000 1000 > .S
+1 0 0 
 ( 0 1 1 ) clearstack 1 1 <= 1 2 <= 2 1 <= .S
 0 1 1 
+( 0 1 1 ) clearstack 1000 1000 <= 1000 2000 <= 2000 1000 <= .S
+0 1 1 
 ( 1 0 1 ) clearstack 1 1 >= 1 2 >= 2 1 >= .S
+1 0 1 
+( 1 0 1 ) clearstack 1000 1000 >= 1000 2000 >= 2000 1000 >= .S
 1 0 1 
 ( 0 1 ) clearstack 1 1 = 1 2 = .S
 0 1 
