@@ -32,6 +32,15 @@ out/forth-8251.bin: $(INCDEPS) forth.asm
 
 test: multitest
 
+sim:
+	$(SIMH) tests/start-simh.input
+
+simwait:
+	$(SIMH) tests/start-simh-wait.input
+
+break:
+	pkill -f BIN/scelbi
+
 iftest:
 	mkdir -p results
 	cat tests/iftest.input | tr '\n' '\r' > /tmp/scelbi-input
@@ -51,5 +60,5 @@ multitest:
 clean:
 	rm -rf *~
 	rm -f results/*.result results/*.test
-	rm -f *.p *.bin *.hex *.lst
+	rm -f out/*.p out/*.bin out/*.hex *.lst
 

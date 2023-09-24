@@ -739,7 +739,7 @@ next:           ;; first setup the indirect jump
                 m_to_ba                 ; BA = address of codeword        
 
                 mvi h,rstackpage
-                mvi l,callee            ; store callee coreword
+                mvi l,callee            ; store callee's coreword to CALLEE
                 mov m,a
                 inr l
                 mov m,b
@@ -755,7 +755,7 @@ next:           ;; first setup the indirect jump
                 mov m,b                 ; MSB of (cur) into jmpaddr_hi
 
                 mvi l,cur               ; now do the increment part of the LODSL
-                double_inc_m jmpa_jump  ; inc and jump to jmpa_jmp
+                double_inc_m jmpa_jump  ; inc CUR +2 and jump to jmpa_jmp
 
 ;------------------------------------------------------------------------
 ; docol - the interpreter
@@ -837,7 +837,7 @@ init:           mvi h,rstackpage
                 inr l
                 mvi m,hi(LASTWORD)
 
-                mvi l,base             ; initialize 'base'
+                mvi l,base              ; initialize 'base'
                 mvi m,0AH
                 inr l
                 mvi m,0
@@ -860,6 +860,17 @@ init:           mvi h,rstackpage
                 jmp next                ; start
 cold_start:     db lo(cw_QUIT), hi(cw_QUIT)
 
+fault_token:    mvi h,hi(token_fault_txt)
+                mvi l,lo(token_fault_txt)
+                call puts
+                mvi h,rstackpage
+                mvi l,wordbuf           ; we null terminated it
+                call puts
+                call write_crlf
+                jmp fault
+
+fault:          call buf_reset          ; discard remaining input
+                jmp code_INTERPRET      ; restart the interpreter
 
 ;------------------------------------------------------------------------
 ; constants
@@ -1118,7 +1129,7 @@ _FIND1:         c_restore               ; C = counter
 
 _FIND_CLOOP:    consume_de_safe
                 mov b,a
-                consume_hl
+                consume_hl              ; XXX could use a cmp m here XXX optimize me XXX
                 cmp b
                 jz _FIND_CASEMATCH      ; we matched with case sensitive
                 xri 20H                 ; flip the case bit
@@ -1218,7 +1229,8 @@ _WORD2:         mov m,a
                 jc  _WORD2B             ; this sequence of 3 jumps as a JA _WORD2
                 jz  _WORD2B
                 jmp _WORD2
-_WORD2B:        ret
+_WORD2B:        mvi m,0H                ; null terminate the wordbuf, makes life easier for everyone
+                ret
 _WORD3:         call _KEY               ; For comments, eat everything until CR or LF
                 cpi CR
                 jz _WORD1
@@ -1535,21 +1547,21 @@ code_LT:        e_save
                 mov e,a         ; CE = first arg
                 popab           ; BA = second arg
 
-                mov h,a         ; swap A and C
-                mov a,c
-                mov c,h
+                mov l,a         ; swap A and E through L
+                mov a,e
+                mov e,l
 
-                mov h,b         ; swap B and E
-                mov b,e
-                mov e,h
+                mov h,b         ; swap B and C through H
+                mov b,c
+                mov c,h
 
                 sub e           ; A = A - E
                 mov a,b
-                sbb c
+                sbb c           ; A = B - C
                 jm _LT_NOT      ; first arg > second arg
 
-                jnz _LT_YES
-                mov a,h
+                jnz _LT_YES     ; first-MSB != second-MSB
+                mov a,l
                 cmp e
                 jnz _LT_YES
                 jmp _LT_NOT     ; they are equal
@@ -2413,10 +2425,11 @@ _INTERP5:       value_ab
                 pushab
                 jmp next
 
-_INTERP6:       mvi h,hi(interperrtxt)
-                mvi l,lo(interperrtxt)
-                call puts
-                jmp next
+_INTERP6:       jmp fault_token;
+                ;mvi h,hi(interperrtxt)
+                ;mvi l,lo(interperrtxt)
+                ;call puts
+                ;jmp next
 
 name_CHAR:      db lo(name_INTERPRET),hi(name_INTERPRET)
                 db 4,'C','H','A','R'
@@ -2486,10 +2499,11 @@ puts:       mov a,m
             inr h
             jmp puts
 
-interperrtxt: db "\r\n\r\nUnknown Token or Not a Number\r\n\r\n",0
+token_fault_txt: db ">> Unknown Token or Not a Number: ",0
 
-titletxt:   db  "\r\n\r\n"
-            db  "8008-Forth by smbaker\r\n",0
+titletxt:   db "\r\n\r\n"
+            db "8008-Forth by smbaker\r\n"
+            db "https://www.smbaker.com/\r\n\r\n",0
 
                 include "bufio.inc"
                 include "lib/serial.inc"

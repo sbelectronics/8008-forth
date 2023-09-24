@@ -43,7 +43,9 @@ buf_dequeue	macro
 		mov m,b			; store head
 		endm
 
-buf_init:	mvi h,rstackpage
+buf_init:	jmp buf_reset
+
+buf_reset:	mvi h,rstackpage
 		mvi l,bufhead		; bufhead points at the current slot to remove
 		mvi m,0
 		mvi l,buftail		; buftail points to the next empty slot to fill

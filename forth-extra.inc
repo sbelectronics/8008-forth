@@ -88,7 +88,21 @@ code_DQCONST:   pushconst '"'
                 jmp next
 
 
-name_BL:        linklast DQCONST
+name_COLCONST:  linklast DQCONST
+                db 3,"':'"
+cw_COLCONST:    db lo(code_COLCONST), hi(code_COLCONST)
+code_COLCONST:  pushconst ':'
+                jmp next
+
+
+name_SEMICONST: linklast COLCONST
+                db 3,"';'"
+cw_SEMICONST:   db lo(code_SEMICONST), hi(code_SEMICONST)
+code_SEMICONST: pushconst '"'
+                jmp next
+
+
+name_BL:        linklast SEMICONST
                 db 2,'B','L'
 cw_BL:          db lo(code_BL), hi(code_BL)
 code_BL:        pushconst SPACE
@@ -312,7 +326,33 @@ cw_LPARAM:      codeword_DOCOL
                 cw DROP
                 cw EXIT
 
-name_SPACES:    linklast LPAREN
+name_NIP:       linklast LPAREN
+                db 3,"NIP"
+cw_NIP:         codeword_DOCOL
+                cw SWAP
+                cw DROP
+                cw EXIT
+
+
+name_TUCK:      linklast NIP
+                db 4,"TUCK"
+cw_TUCK:        codeword_DOCOL
+                cw SWAP
+                cw OVER
+                cw EXIT
+
+name_PICK:      linklast TUCK
+                db 4,"PICK"
+cw_PICK:        codeword_DOCOL
+                cw INCR
+                cwlit 0004
+                cw MULT
+                cw DSPFETCH
+                cw ADD
+                cw FETCH
+                cw EXIT
+
+name_SPACES:    linklast PICK
                 db 6,'S','P','A','C','E','S'
 cw_SPACES:      codeword_DOCOL
                 cw DUP
@@ -744,7 +784,16 @@ cw_QHIDDEN:     codeword_DOCOL
                 cw AND
                 cw EXIT
 
-name_WORDS:     linklast QHIDDEN
+name_QIMMEDIATE: linklast QHIDDEN
+                db 10,"?IMMEDIATE"
+cw_QIMMEDIATE:  codeword_DOCOL
+                cw INCR2
+                cw FETCHBYTE
+                cw F_IMMED
+                cw AND
+                cw EXIT
+
+name_WORDS:     linklast QIMMEDIATE
                 db 5,'W','O','R','D','S'
 cw_WORDS:       codeword_DOCOL
                 cw LATEST
@@ -766,7 +815,6 @@ cw_WORDS:       codeword_DOCOL
                 cw CR
                 cw EXIT
 
-LASTWORD_EXTRA:
 name_FORGET:    linklast WORDS
                 db 6,'F','O','R','G','E','T'
 cw_FORGET:      codeword_DOCOL
@@ -779,3 +827,257 @@ cw_FORGET:      codeword_DOCOL
                 cw HERE
                 cw STORE
                 cw EXIT
+
+name_CASE:      linklast FORGET
+                db 4|F_IMMED,"CASE"
+cw_CASE:        codeword_DOCOL
+                cwlit 0000
+                cw EXIT
+
+name_OF:        linklast CASE
+                db 2|F_IMMED,"OF"
+cw_OF:          codeword_DOCOL
+                cw TICK
+                cw OVER
+                cw COMMA
+                cw TICK
+                cw EQUAL
+                cw COMMA
+                cw IF
+                cw TICK
+                cw DROP
+                cw COMMA
+                cw EXIT
+
+name_ENDOF:     linklast OF
+                db 5|F_IMMED,"ENDOF"
+cw_ENDOF:       codeword_DOCOL
+                cw ELSE
+                cw EXIT
+
+LASTWORD_EXTRA:
+name_ENDCASE:   linklast ENDOF
+                db 7|F_IMMED,"ENDCASE"
+cw_ENDCASE:     codeword_DOCOL
+                cw TICK
+                cw DROP
+                cw COMMA
+                cw QDUP
+                cw ZBRANCH
+                dw 0008H
+                cw THEN
+                cw BRANCH
+                dw -00AH
+                cw EXIT
+
+                ifdef notdefined
+
+name_CFAT: linklast ENDCASE
+                db 4,"CFA>"
+cw_CFAT:        codeword_DOCOL
+                cw LATEST
+                cw FETCH
+                cw QDUP
+                cw ZBRANCH
+                dw 0016H
+                cw 2DUP
+                cw SWAP
+                cw LT
+                cw ZBRANCH
+                dw 0006H
+                cw NIP
+                cw EXIT
+                cw FETCH
+                cw BRANCH
+                dw -018H
+                cw DROP
+                cwlit 0000
+                cw EXIT
+
+
+name_SEE:       linklast CFAT
+                db 3,"SEE"
+cw_SEE:         codeword_DOCOL
+                cw WORD
+                cw FIND
+                cw HERE
+                cw FETCH
+                cw LATEST
+                cw FETCH
+                cwlit 0002
+                cw PICK
+                cw OVER
+                cw NEQUAL
+                cw ZBRANCH
+                dw 000CH
+                cw NIP
+                cw DUP
+                cw FETCH
+                cw BRANCH
+                dw -016H
+                cw DROP
+                cw SWAP
+                cw COLCONST
+                cw EMIT
+                cw SPACE
+                cw DUP
+                cw IDDOT
+                cw SPACE
+                cw DUP
+                cw QIMMEDIATE
+                cw ZBRANCH
+                dw 000EH
+                cw SSTORE
+                dw 000AH
+                db "IMMEDIATE ",'"x'
+                cw TELL
+                cw TDFA
+                cw 2DUP
+                cw GT
+                cw ZBRANCH
+                dw 0136H
+                cw DUP
+                cw FETCH
+                cw TICK
+                cw LIT
+                cw OVER
+                cw EQUAL
+                cw ZBRANCH
+                dw 0014H
+                cw DROP
+                cwlit 0002   ; XXX 4
+                cw ADD
+                cw DUP
+                cw FETCH
+                cw DOT
+                cw BRANCH
+                dw 010AH
+                cw TICK
+                cw LITSTRING
+                cw OVER
+                cw EQUAL
+                cw ZBRANCH
+                dw 003CH
+                cw DROP
+                cwlit 0053
+                cw EMIT
+                cw DQCONST
+                cw EMIT
+                cw SPACE
+                cwlit 0002  ; XXX 4
+                cw ADD
+                cw DUP
+                cw FETCH
+                cw SWAP
+                cwlit 0002  ; XXX 4
+                cw ADD
+                cw SWAP
+                cw 2DUP
+                cw TELL
+                cw DQCONST
+                cw EMIT
+                cw SPACE
+                cw ADD
+                cw ALIGNED
+                cwlit 0002   ; XXX 4
+                cw SUB
+                cw BRANCH
+                dw 00C4H
+                cw TICK
+                cw ZBRANCH
+                cw OVER
+                cw EQUAL
+                cw ZBRANCH
+                dw 0028H
+                cw DROP
+                cw SSTORE
+                dw 000AH
+                db "0BRANCH ( ",'"x'
+                cw TELL
+                cwlit 0002   ; XXX 4
+                cw ADD
+                cw DUP
+                cw FETCH
+                cw DOT
+                cw SSTORE
+                dw 0002H
+                db ") ",'"x'
+                cw TELL
+                cw BRANCH
+                dw 0092H
+                cw TICK
+                cw BRANCH
+                cw OVER
+                cw EQUAL
+                cw ZBRANCH
+                dw 0028H
+                cw DROP
+                cw SSTORE
+                dw 0009H
+                db "BRANCH ( ",'"xx'
+                cw TELL
+                cwlit 0002   ; XXX 4
+                cw ADD
+                cw DUP
+                cw FETCH
+                cw DOT
+                cw SSTORE
+                dw 0002H
+                db ") ",'"x'
+                cw TELL
+                cw BRANCH
+                dw 0060H
+                cw TICK
+                cw TICK
+                cw OVER
+                cw EQUAL
+                cw ZBRANCH
+                dw 0020H
+                cw DROP
+                cwlit 0027
+                cw EMIT
+                cw SPACE
+                cwlit 0002    ; XXX 4
+                cw ADD
+                cw DUP
+                cw FETCH
+                cw CFAT
+                cw IDDOT
+                cw SPACE
+                cw BRANCH
+                dw 0036H
+                cw TICK
+                cw EXIT
+                cw OVER
+                cw EQUAL
+                cw ZBRANCH
+                dw 0020H
+                cw DROP
+                cw 2DUP
+                cwlit 0002   ; XXX 4
+                cw ADD
+                cw NEQUAL
+                cw ZBRANCH
+                dw 000CH
+                cw SSTORE
+                dw 0005H
+                db "EXIT ",'"xx'
+                cw TELL
+                cw BRANCH
+                dw 000CH
+                cw DUP
+                cw CFAT
+                cw IDDOT
+                cw SPACE
+                cw DROP
+                cwlit 0002   ; XXX 4
+                cw ADD
+                cw BRANCH
+                dw -13AH
+                cw SEMICONST
+                cw EMIT
+                cw CR
+                cw 2DROP
+                cw EXIT
+
+                endif
