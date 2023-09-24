@@ -1547,23 +1547,10 @@ code_LT:        e_save
                 mov e,a         ; CE = first arg
                 popab           ; BA = second arg
 
-                mov l,a         ; swap A and E through L
-                mov a,e
-                mov e,l
-
-                mov h,b         ; swap B and C through H
-                mov b,c
-                mov c,h
-
                 sub e           ; A = A - E
                 mov a,b
                 sbb c           ; A = B - C
-                jm _LT_NOT      ; first arg > second arg
-
-                jnz _LT_YES     ; first-MSB != second-MSB
-                mov a,l
-                cmp e
-                jnz _LT_YES
+                jm _LT_YES      ; first arg > second arg
                 jmp _LT_NOT     ; they are equal
 
 _LT_YES:        e_restore
