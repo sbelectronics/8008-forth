@@ -37,7 +37,7 @@
 forthversion    equ     0100H
 
 rstackpage      equ     01H
-cur             equ     00H
+cur             equ     00H             ; CUR holds the next element in the body to execute
 fill0           equ     02H
 jmpa_instr      equ     03H
 jmpa_addr       equ     04H
@@ -58,7 +58,7 @@ s0              equ     1AH
 base            equ     1CH
 matchptr        equ     1EH
 testptr         equ     20H
-eax             equ     22H
+callee          equ     22H             ; Callee points to the codeword of a subroutine to execute
 temp1           equ     24H
 temp2           equ     26H
 temp3           equ     28H
@@ -486,17 +486,9 @@ ab_value        macro
                 ab_varioble value
                 endm
 
-eax_ab          macro
-                variable_ab eax
-                endm
-
-ab_eax          macro
-                ab_variable eax
-                endm
-
-eax_hl          macro
+variable_hl     macro var
                 mvi h,rstackpage
-                mvi l,eax
+                mvi l,var
                 mov a,m
                 inr l
                 mov h,m
@@ -519,9 +511,9 @@ de_variable     macro variable
                 mov m,d
                 endm
 
-symbol_eax      macro symbol
+symbol_variable macro symbol,variable
                 mvi h,rstackpage
-                mvi l,eax
+                mvi l,variable
                 mvi m,lo(symbol)
                 inr l
                 mvi m,hi(symbol)
@@ -723,7 +715,7 @@ rom_start:      call SINIT              ; Initialize serial port
 ; next - increment program pointer and jump to next;
 ;
 ; 1. CUR holds the current element in our body. Dereference it to get
-;    the address of the callee's codeword, and store that in EAX.
+;    the address of the callee's codeword, and store that in CALLEE.
 ;
 ; 2. Dereference the callee's codeword to get the address to jump to
 ;
@@ -747,7 +739,7 @@ next:           ;; first setup the indirect jump
                 m_to_ba                 ; Put (cur) into BA          
 
                 mvi h,rstackpage
-                mvi l,eax               ; store EAX in eax
+                mvi l,callee            ; store callee coreword
                 mov m,a
                 inr l
                 mov m,b
@@ -771,7 +763,7 @@ next:           ;; first setup the indirect jump
 ; 1. CUR holds the next element in the Caller's body. Push it to the
 ;    return stack.
 ;
-; 2. Load our codeword address from EAX
+; 2. Load our codeword address from CALLEE
 ;
 ; 3. Increment by 2 to skip the codeword and point to our body
 ;
@@ -797,7 +789,7 @@ docol:          mvi h,rstackpage
                 mov m,C                 ; LSB into rstackptr-2
                 rstackptr_put
 
-                mvi l,eax
+                mvi l,callee
                 mov a,m
                 inr l
                 mov b,m
@@ -1949,7 +1941,7 @@ code_CREATE:    de_save
                 popab
                 mov c,a                 ; C = length
                 popab                   ; AB = address of name
-                ab_eax                  ; save AB to EAX
+                ab_variable temp1       ; save AB to temp1
 
                 variable_de here        ; get HERE into DE
 
@@ -1963,7 +1955,7 @@ code_CREATE:    de_save
                 inr_hl
                 uni_hlde                ; DE = here+3
 
-                eax_ab                  ; address of name
+                variable_ab temp1       ; address of name
                 mov h,b
                 mov l,a                 ; HL = source address
 
@@ -2384,7 +2376,7 @@ code_INTERPRET: call _WORD              ; returns word in wordbuf, length in C
 
                 mov c,m                 ; get the flags into C
                 call _TCFA_ATLEN
-                ab_eax                  ; save it to eax for good safe keeping
+                ab_variable callee      ; save it to temp1 for good safe keeping
                 mov a,c                 ; restore flags to A
                 ani F_IMMED
                 jnz _INTERP4            ; immediate - go to execute
@@ -2398,12 +2390,12 @@ _INTERP1:       islit_set
                 ;; TODO: error check on _NUMBER
                 variable_check numerr
                 jnz _INTERP6
-                symbol_eax cw_LIT
+                symbol_variable cw_LIT,callee
 
 _INTERP2:       state_check
                 jz _INTERP4             ; executing
 
-                eax_ab
+                variable_ab callee
                 call _COMMA
                 islit_check
                 jz _INTERP3             ; not literal
@@ -2414,7 +2406,7 @@ _INTERP3:       jmp next
 _INTERP4:       islit_check
                 jnz _INTERP5            ; yes literal
 
-                eax_hl                  ; get the address of the codeword back into HL
+                variable_hl callee      ; get the address of the codeword back into HL
                 jmp_hl_indir
 
 _INTERP5:       value_ab

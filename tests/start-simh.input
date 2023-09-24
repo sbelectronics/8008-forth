@@ -1,3 +1,3 @@
-load ../h8/h8-8008/asm/forth-scelbi.bin
+load ../8008-forth/out/forth-scelbi.bin
 g
 quit
