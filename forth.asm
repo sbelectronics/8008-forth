@@ -152,7 +152,7 @@ pushconst       macro v
                 dstackptr_put           ; update dstack pointer
                 endm
 
-peek_ba          macro                   ; a=lsb, b=msb
+peek_ba         macro                   ; a=lsb, b=msb
                 mvi h,dstackpage
                 dstackptr_get
                 mov a,m                 ; get LSB
@@ -160,7 +160,7 @@ peek_ba          macro                   ; a=lsb, b=msb
                 mov b,m                 ; get MSB
                 endm                
 
-pop_ba           macro                   ; a=lsb, b=msb
+pop_ba          macro                   ; a=lsb, b=msb
                 mvi h,dstackpage
                 dstackptr_get
                 mov a,m                 ; get LSB
@@ -170,13 +170,13 @@ pop_ba           macro                   ; a=lsb, b=msb
                 dstackptr_put
                 endm
 
-pop_hl           macro
+pop_hl          macro
                 pop_ba                   ; could optimize...
                 mov h,b
                 mov l,a
                 endm                
 
-pusb_ba          macro                   ; a=lsb, b=msb
+pusb_ba         macro                   ; a=lsb, b=msb
                 mvi h,dstackpage
                 dstackptr_get
                 dcr l
@@ -196,7 +196,7 @@ push_0c         macro                   ; a=lsb, b=msb
                 dstackptr_put
                 endm
 
-rspop_ba         macro                   ; a=lsb, b=msb
+rspop_ba        macro                   ; a=lsb, b=msb
                 mvi h,rstackpage
                 rstackptr_get
                 mov a,m                 ; get LSB
@@ -206,7 +206,7 @@ rspop_ba         macro                   ; a=lsb, b=msb
                 rstackptr_put
                 endm
 
-rspusb_ba        macro                   ; a=lsb, b=msb
+rspusb_ba       macro                   ; a=lsb, b=msb
                 mvi h,rstackpage
                 rstackptr_get
                 dcr l
@@ -264,7 +264,7 @@ state_clear     macro
                 mvi m,0
                 endm
 
-neg_check     macro
+neg_check       macro
                 mvi h,rstackpage
                 mvi l,neg
                 mov a,m
