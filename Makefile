@@ -22,7 +22,7 @@ out/forth-scelbi.bin: $(INCDEPS) forth.asm
 
 out/forth-bitbang.bin: $(INCDEPS) forth.asm
 	mkdir -p out
-	$(ASL) -i $(INC) -cpu 8008 -L forth.asm -o out/forth-bitbang.p -D bitbang
+	$(ASL) -i $(INC) -cpu 8008 -L forth.asm -o out/forth-bitbang.p -D bitbang -D nocinpne
 	$(P2BIN) out/forth-bitbang.p out/forth-bitbang.bin
 
 out/forth-8251.bin: $(INCDEPS) forth.asm

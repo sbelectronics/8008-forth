@@ -2414,18 +2414,17 @@ code_EXECUTE:   popab                   ; get execution token
 name_OUT:       linklast EXECUTE
                 db 3,"OUT"
 cw_OUT:         db lo(code_OUT),hi(code_OUT)
-code_OUT:       popab
-                mov c,a
-                popab
-                mov a,c                     ; recall the address from C
-                ani 00011111B               ; construct the "OUT" instruction
+code_OUT:       popab                   ; get the port address into A
+                ani 00011111B           ; construct the "OUT" instruction
                 rlc
                 ori 01000001B
                 mvi h,hi(jmpa_addr)
                 mvi l,lo(jmpa_addr)
-                mov m,a                   ; store the "OUT" instruction at jmp_addr
+                mov m,a                 ; store the "OUT" instruction at jmp_addr
                 inr l
-                mvi m,07H                 ; store the "RET" instruction at jmp_addr+1
+                mvi m,07H               ; store the "RET" instruction at jmp_addr+1
+                mov a,b
+                popab                   ; get the value in A
                 call jmpa_addr
                 jmp next
 
