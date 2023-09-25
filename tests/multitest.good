@@ -38,6 +38,14 @@ https://www.smbaker.com/
 
 0001 
 
+( 1000 ) clearstack 10 100 * .
+1000 
+( 1111 ) clearstack 11 101 * .
+1111 
+( 13574 ) clearstack 1234 11 * .
+13574 
+( 25500 ) clearstack 100 255 * .
+25500 
 ( 0 1 0 ) clearstack 1 1 < 1 2 < 2 1 < .S
 0 1 0 
 ( 0 1 0 ) clearstack 1000 1000 < 1000 2000 < 2000 1000 < .S
@@ -78,6 +86,8 @@ https://www.smbaker.com/
 5115 
 ( EDCB ) hex 1234 invert U. decimal
 EDCB 
+( 1234 4321 ABCD FEED FACE 64206 65261 43981 17185 4660 ) clearstack hex 1234 4321 ABCD FEED FACE .S decimal .S
+FACE FEED ABCD 4321 1234 64206 65261 43981 17185 4660 
 ( 0002 ) clearstack : foo 0 if 001 else 002 then ; foo prstack
 
 0002 

@@ -16,6 +16,14 @@
 
 ( 0001 ) clearstack 33 2 mod prstack
 
+( 1000 ) clearstack 10 100 * .
+
+( 1111 ) clearstack 11 101 * .
+
+( 13574 ) clearstack 1234 11 * .
+
+( 25500 ) clearstack 100 255 * .
+
 ( 0 1 0 ) clearstack 1 1 < 1 2 < 2 1 < .S
 
 ( 0 1 0 ) clearstack 1000 1000 < 1000 2000 < 2000 1000 < .S
@@ -55,6 +63,8 @@
 ( 5115 ) hex 1234 4321 xor U. decimal
 
 ( EDCB ) hex 1234 invert U. decimal
+
+( 1234 4321 ABCD FEED FACE 64206 65261 43981 17185 4660 ) clearstack hex 1234 4321 ABCD FEED FACE .S decimal .S
 
 ( 0002 ) clearstack : foo 0 if 001 else 002 then ; foo prstack
 

@@ -38,7 +38,7 @@ forthversion    equ     0100H
 
 rstackpage      equ     01H
 cur             equ     00H             ; CUR holds the next element in the body to execute
-fill0           equ     02H
+e_temp2         equ     02H
 jmpa_instr      equ     03H
 jmpa_addr       equ     04H
 islit           equ     06H
@@ -373,6 +373,18 @@ e_restore       macro
                 mov e,m
                 endm
 
+e_save2         macro
+                mvi h,rstackpage
+                mvi l,e_temp2
+                mov m,e
+                endm
+
+e_restore2      macro
+                mvi h,rstackpage
+                mvi l,e_temp2
+                mov e,m
+                endm
+
 de_save         macro
                 mvi h,rstackpage
                 mvi l,d_temp
@@ -478,6 +490,12 @@ a_variable      macro variable
                 mvi m,0
                 endm
 
+variable_c      macro variable
+                mvi h,rstackpage
+                mvi l,variable
+                mov c,m
+                endm
+
 value_ab        macro
                 variable_ab value
                 endm
@@ -554,30 +572,6 @@ value_add_a     macro
                 mov m,a
                 endm
 
-value_mul_base  macro
-                value_ab
-                ab_variable temp1
-
-                mvi h,rstackpage
-                mvi l,base
-                mov b,m                 ; b = count of times to multiply
-                dcr b
-mul_loop:
-                mvi l,value
-                mov a,m                 ; A = value_lsb
-                mvi l,temp1
-                add m                   ; A = A + temp_lsb
-                mvi l,value             
-                mov m,a                 ; value_lsb = A
-                inr l
-                mov a,m                 ; A = value_msb
-                mvi l,temp1+1
-                adc m                   ; A = A + temp_msb + carry
-                mvi l,value+1
-                mov m,a                 ; value_msb = A
-                dcr b
-                jnz mul_loop            ; loop until done
-                endm
 
 linklast        macro prevword
                 db lo(name_prevword), hi(name_prevword)
@@ -633,6 +627,7 @@ div16_8         macro
 
 ; Input BA = multiplicand, C = multiplier
 ; Output BA = product
+; Destroys C,E
 
 mul16_8         macro
                 mvi h,0         ; HL is partial product
@@ -651,7 +646,7 @@ mul16_8         macro
                 add e
                 mov l,a
                 mov a,h         ; Add multiplicand MSB
-                add b
+                adc b
                 mov h,a
 
 m0:             ;; shift multiplicand to the left
@@ -872,6 +867,9 @@ fault_token:    mvi h,hi(token_fault_txt)
 fault:          call buf_reset          ; discard remaining input
                 jmp code_INTERPRET      ; restart the interpreter
 
+multfunc:       mul16_8
+                ret
+
 ;------------------------------------------------------------------------
 ; constants
 ;------------------------------------------------------------------------
@@ -1044,19 +1042,26 @@ _NUMBER:        de_save
                 jnz _NUMBER_1
                 jmp _NUMBER_5           ; must be '-' with no digits
 
-_NUMBER_1:      value_mul_base
+_NUMBER_1:      e_save2
+                c_save
+                variable_ab value
+                variable_c base
+                call multfunc
+                ab_variable value
+                c_restore
+                e_restore2
                 consume_de
 
-_NUMBER_2:      sbi '0'
+_NUMBER_2:      sui '0'
                 jc _NUMBER_4            ; less than zero
                 cpi 0AH
                 jc _NUMBER_3            ; between '0' and '9'
-                sbi 11H
+                sui 11H
                 jc _NUMBER_4            ; between '9' and 'A'
                 adi 0AH                 ; add 10, since it must have been >= 'A'
                 cpi 2AH                 ; in the uppercase range?
                 jm _NUMBER_NOTLOW       ; Nope.
-                sbi 20H                 ; uppercase letter?
+                sui 20H                 ; uppercase letter?
 _NUMBER_NOTLOW:
 
 _NUMBER_3:      mvi h,rstackpage
@@ -1483,7 +1488,7 @@ code_MULT:      e_save
                 popab
                 mov c,a
                 popab
-                mul16_8
+                call multfunc
                 pushab
                 e_restore
                 jmp next
