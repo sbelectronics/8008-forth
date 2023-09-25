@@ -290,7 +290,7 @@ cw_REPEAT:      codeword_DOCOL
                 cw EXIT
 
 name_UNLESS:    linklast REPEAT
-                db 5|F_IMMED,'U','N','L','E','S','S'
+                db 6|F_IMMED,'U','N','L','E','S','S'
 cw_UNLESS:      codeword_DOCOL
                 cw TICK
                 cw ZEQUAL
