@@ -1,0 +1,1 @@
+: ?IMMEDIATE 4+ C@ F_IMMED AND ;

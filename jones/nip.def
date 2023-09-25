@@ -1,0 +1,1 @@
+: NIP SWAP DROP ;

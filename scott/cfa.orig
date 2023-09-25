@@ -1,0 +1,19 @@
+: CFA>
+	LATEST @	( start at LATEST dictionary entry )
+	BEGIN
+		?DUP		( while link pointer is not null )
+	WHILE
+		2DUP SWAP	( cfa curr curr cfa )
+		< IF		( current dictionary entry < cfa? )
+                2DUP SWAP
+		33 -		
+		    > IF        ( current directory entry > cfa-33? handles case where HERE < ROM)
+			NIP		( leave curr dictionary entry on the stack )
+			EXIT
+		    THEN
+		THEN
+		@		( follow link pointer back )
+	REPEAT
+	DROP		( restore stack )
+	0		( sorry, nothing found )
+;

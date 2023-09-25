@@ -98,7 +98,7 @@ code_COLCONST:  pushconst ':'
 name_SEMICONST: linklast COLCONST
                 db 3,"';'"
 cw_SEMICONST:   db lo(code_SEMICONST), hi(code_SEMICONST)
-code_SEMICONST: pushconst '"'
+code_SEMICONST: pushconst ';'
                 jmp next
 
 
@@ -345,7 +345,7 @@ name_PICK:      linklast TUCK
                 db 4,"PICK"
 cw_PICK:        codeword_DOCOL
                 cw INCR
-                cwlit 0004
+                cwlit 0002
                 cw MULT
                 cw DSPFETCH
                 cw ADD
@@ -855,7 +855,7 @@ cw_ENDOF:       codeword_DOCOL
                 cw ELSE
                 cw EXIT
 
-LASTWORD_EXTRA:
+
 name_ENDCASE:   linklast ENDOF
                 db 7|F_IMMED,"ENDCASE"
 cw_ENDCASE:     codeword_DOCOL
@@ -870,31 +870,36 @@ cw_ENDCASE:     codeword_DOCOL
                 dw -00AH
                 cw EXIT
 
-                ifdef notdefined
-
-name_CFAT: linklast ENDCASE
+name_CFAT:      linklast ENDCASE
                 db 4,"CFA>"
 cw_CFAT:        codeword_DOCOL
                 cw LATEST
                 cw FETCH
                 cw QDUP
                 cw ZBRANCH
-                dw 0016H
+                dw 0026H
                 cw 2DUP
                 cw SWAP
                 cw LT
+                cw ZBRANCH
+                dw 0016H
+                cw 2DUP
+                cw SWAP
+                cwlit 0021
+                cw SUB
+                cw GT
                 cw ZBRANCH
                 dw 0006H
                 cw NIP
                 cw EXIT
                 cw FETCH
                 cw BRANCH
-                dw -018H
+                dw -028H
                 cw DROP
                 cwlit 0000
                 cw EXIT
 
-
+LASTWORD_EXTRA:
 name_SEE:       linklast CFAT
                 db 3,"SEE"
 cw_SEE:         codeword_DOCOL
@@ -904,7 +909,7 @@ cw_SEE:         codeword_DOCOL
                 cw FETCH
                 cw LATEST
                 cw FETCH
-                cwlit 0002
+                cwlit 0002H
                 cw PICK
                 cw OVER
                 cw NEQUAL
@@ -926,16 +931,16 @@ cw_SEE:         codeword_DOCOL
                 cw DUP
                 cw QIMMEDIATE
                 cw ZBRANCH
-                dw 000EH
-                cw SSTORE
+                dw 0012H
+                cw LITSTRING
                 dw 000AH
-                db "IMMEDIATE ",'"x'
+                db "IMMEDIATE "
                 cw TELL
                 cw TDFA
                 cw 2DUP
                 cw GT
                 cw ZBRANCH
-                dw 0136H
+                dw 013EH
                 cw DUP
                 cw FETCH
                 cw TICK
@@ -945,13 +950,13 @@ cw_SEE:         codeword_DOCOL
                 cw ZBRANCH
                 dw 0014H
                 cw DROP
-                cwlit 0002   ; XXX 4
+                cwlit 0002H
                 cw ADD
                 cw DUP
                 cw FETCH
                 cw DOT
                 cw BRANCH
-                dw 010AH
+                dw 0112H
                 cw TICK
                 cw LITSTRING
                 cw OVER
@@ -959,17 +964,17 @@ cw_SEE:         codeword_DOCOL
                 cw ZBRANCH
                 dw 003CH
                 cw DROP
-                cwlit 0053
+                cwlit 0053H
                 cw EMIT
                 cw DQCONST
                 cw EMIT
                 cw SPACE
-                cwlit 0002  ; XXX 4
+                cwlit 0002H
                 cw ADD
                 cw DUP
                 cw FETCH
                 cw SWAP
-                cwlit 0002  ; XXX 4
+                cwlit 0002H
                 cw ADD
                 cw SWAP
                 cw 2DUP
@@ -979,54 +984,54 @@ cw_SEE:         codeword_DOCOL
                 cw SPACE
                 cw ADD
                 cw ALIGNED
-                cwlit 0002   ; XXX 4
+                cwlit 0002H
                 cw SUB
                 cw BRANCH
-                dw 00C4H
+                dw 00CCH
                 cw TICK
                 cw ZBRANCH
                 cw OVER
                 cw EQUAL
                 cw ZBRANCH
-                dw 0028H
+                dw 002CH
                 cw DROP
-                cw SSTORE
+                cw LITSTRING
                 dw 000AH
-                db "0BRANCH ( ",'"x'
+                db "0BRANCH ( "
                 cw TELL
-                cwlit 0002   ; XXX 4
+                cwlit 0002H
                 cw ADD
                 cw DUP
                 cw FETCH
                 cw DOT
-                cw SSTORE
+                cw LITSTRING
                 dw 0002H
-                db ") ",'"x'
+                db ") "
                 cw TELL
                 cw BRANCH
-                dw 0092H
+                dw 0096H
                 cw TICK
                 cw BRANCH
                 cw OVER
                 cw EQUAL
                 cw ZBRANCH
-                dw 0028H
+                dw 002BH
                 cw DROP
-                cw SSTORE
+                cw LITSTRING
                 dw 0009H
-                db "BRANCH ( ",'"xx'
+                db "BRANCH ( "
                 cw TELL
-                cwlit 0002   ; XXX 4
+                cwlit 0002H
                 cw ADD
                 cw DUP
                 cw FETCH
                 cw DOT
-                cw SSTORE
+                cw LITSTRING
                 dw 0002H
-                db ") ",'"x'
+                db ") "
                 cw TELL
                 cw BRANCH
-                dw 0060H
+                dw 0061H
                 cw TICK
                 cw TICK
                 cw OVER
@@ -1034,10 +1039,10 @@ cw_SEE:         codeword_DOCOL
                 cw ZBRANCH
                 dw 0020H
                 cw DROP
-                cwlit 0027
+                cwlit 0027H
                 cw EMIT
                 cw SPACE
-                cwlit 0002    ; XXX 4
+                cwlit 0002H
                 cw ADD
                 cw DUP
                 cw FETCH
@@ -1045,23 +1050,23 @@ cw_SEE:         codeword_DOCOL
                 cw IDDOT
                 cw SPACE
                 cw BRANCH
-                dw 0036H
+                dw 0037H
                 cw TICK
                 cw EXIT
                 cw OVER
                 cw EQUAL
                 cw ZBRANCH
-                dw 0020H
+                dw 0021H
                 cw DROP
                 cw 2DUP
-                cwlit 0002   ; XXX 4
+                cwlit 0002H
                 cw ADD
                 cw NEQUAL
                 cw ZBRANCH
-                dw 000CH
-                cw SSTORE
+                dw 000DH
+                cw LITSTRING
                 dw 0005H
-                db "EXIT ",'"xx'
+                db "EXIT "
                 cw TELL
                 cw BRANCH
                 dw 000CH
@@ -1070,14 +1075,12 @@ cw_SEE:         codeword_DOCOL
                 cw IDDOT
                 cw SPACE
                 cw DROP
-                cwlit 0002   ; XXX 4
+                cwlit 0002H
                 cw ADD
                 cw BRANCH
-                dw -13AH
+                dw -142H
                 cw SEMICONST
                 cw EMIT
                 cw CR
                 cw 2DROP
                 cw EXIT
-
-                endif

@@ -1,0 +1,17 @@
+: 'q' [ CHAR q ] LITERAL ;
+: 's' [ CHAR s ] LITERAL ;
+: 'x' [ CHAR x ] LITERAL ;
+0 VALUE VQUIT
+0 VALUE VSLEEP
+: casetest
+		CASE
+			'q' OF 1 TO VQUIT ENDOF
+			's' OF 1 TO VSLEEP ENDOF
+			( default case: )
+			." Sorry, I didn't understand key <" DUP EMIT ." >, try again." CR
+		ENDCASE
+;
+'q' casetest VQUIT . VSLEEP .
+'s' casetest VQUIT . VSLEEP .
+'x' casetest VQUIT . VSLEEP .
+bye

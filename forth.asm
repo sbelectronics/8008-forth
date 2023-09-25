@@ -1054,6 +1054,10 @@ _NUMBER_2:      sbi '0'
                 sbi 11H
                 jc _NUMBER_4            ; between '9' and 'A'
                 adi 0AH                 ; add 10, since it must have been >= 'A'
+                cpi 2AH                 ; in the uppercase range?
+                jm _NUMBER_NOTLOW       ; Nope.
+                sbi 20H                 ; uppercase letter?
+_NUMBER_NOTLOW:
 
 _NUMBER_3:      mvi h,rstackpage
                 mvi l,base
