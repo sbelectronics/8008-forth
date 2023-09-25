@@ -152,7 +152,7 @@ pushconst       macro v
                 dstackptr_put           ; update dstack pointer
                 endm
 
-peekab          macro                   ; a=lsb, b=msb
+peek_ba          macro                   ; a=lsb, b=msb
                 mvi h,dstackpage
                 dstackptr_get
                 mov a,m                 ; get LSB
@@ -160,7 +160,7 @@ peekab          macro                   ; a=lsb, b=msb
                 mov b,m                 ; get MSB
                 endm                
 
-popab           macro                   ; a=lsb, b=msb
+pop_ba           macro                   ; a=lsb, b=msb
                 mvi h,dstackpage
                 dstackptr_get
                 mov a,m                 ; get LSB
@@ -170,13 +170,13 @@ popab           macro                   ; a=lsb, b=msb
                 dstackptr_put
                 endm
 
-pophl           macro
-                popab                   ; could optimize...
+pop_hl           macro
+                pop_ba                   ; could optimize...
                 mov h,b
                 mov l,a
                 endm                
 
-pushab          macro                   ; a=lsb, b=msb
+pusb_ba          macro                   ; a=lsb, b=msb
                 mvi h,dstackpage
                 dstackptr_get
                 dcr l
@@ -196,16 +196,7 @@ push_0c         macro                   ; a=lsb, b=msb
                 dstackptr_put
                 endm
 
-pushvar         macro addr
-                mvi h,hi(addr)
-                mvi l,lo(addr)
-                mov a,m                 ; LSB into A
-                inr l
-                mov b,m                 ; MSB into B
-                pushab
-                endm
-
-rspopab         macro                   ; a=lsb, b=msb
+rspop_ba         macro                   ; a=lsb, b=msb
                 mvi h,rstackpage
                 rstackptr_get
                 mov a,m                 ; get LSB
@@ -215,7 +206,7 @@ rspopab         macro                   ; a=lsb, b=msb
                 rstackptr_put
                 endm
 
-rspushab        macro                   ; a=lsb, b=msb
+rspusb_ba        macro                   ; a=lsb, b=msb
                 mvi h,rstackpage
                 rstackptr_get
                 dcr l
@@ -464,9 +455,7 @@ variable_check  macro variable
                 ora m
                 endm
 
-                ;; value_ab: read the contents of `value` into AB
-
-variable_ab     macro variable
+variable_ba     macro variable
                 mvi h,rstackpage
                 mvi l,variable
                 mov a,m
@@ -474,7 +463,7 @@ variable_ab     macro variable
                 mov b,m
                 endm
 
-ab_variable     macro variable
+ba_variable     macro variable
                 mvi h,rstackpage
                 mvi l,variable
                 mov m,a
@@ -494,14 +483,6 @@ variable_c      macro variable
                 mvi h,rstackpage
                 mvi l,variable
                 mov c,m
-                endm
-
-value_ab        macro
-                variable_ab value
-                endm
-
-ab_value        macro
-                ab_varioble value
                 endm
 
 variable_hl     macro var
@@ -585,7 +566,7 @@ cw              macro x
                 db lo(cw_x), hi(cw_x)
                 endm
 
-cwlit           macro x
+cw_lit          macro x
                 db lo(cw_LIT), hi(cw_LIT)
                 db lo(x), hi(x)
                 endm
@@ -924,16 +905,16 @@ code_F_LENMASK: pushconst F_LENMASK
 name_TOR:       db lo(name_F_LENMASK), hi(name_F_LENMASK)
                 db 2,'>','R'
 cw_TOR:         db lo(code_TOR), hi(code_TOR)
-code_TOR:       popab
-                rspushab
+code_TOR:       pop_ba
+                rspusb_ba
                 jmp next
 
 
 name_FROMR:     db lo(name_TOR), hi(name_TOR)
                 db 2,'R','>'
 cw_FROMR:       db lo(code_FROMR), hi(code_FROMR)
-code_FROMR:     rspopab
-                pushab
+code_FROMR:     rspop_ba
+                pusb_ba
                 jmp next
 
 
@@ -942,14 +923,14 @@ name_RSPFETCH:  db lo(name_FROMR), hi(name_FROMR)
 cw_RSPFETCH:    db lo(code_RSPFETCH), hi(code_RSPFETCH)
 code_RSPFETCH:  mvi b,rstackpage
                 mov a,e
-                pushab
+                pusb_ba
                 jmp next
 
 
 name_RSPSTORE:  db lo(name_RSPFETCH), hi(name_RSPFETCH)
                 db 4,'R','S','P','!'
 cw_RSPSTORE:    db lo(code_RSPSTORE), hi(code_RSPSTORE)
-code_RSPSTORE:  popab
+code_RSPSTORE:  pop_ba
                 mov e,a
                 jmp next
 
@@ -962,14 +943,14 @@ name_DSPFETCH:  db lo(name_RSPSTORE), hi(name_RSPSTORE)
 cw_DSPFETCH:    db lo(code_DSPFETCH), hi(code_DSPFETCH)
 code_DSPFETCH:  mvi b,dstackpage
                 mov a,d
-                pushab
+                pusb_ba
                 jmp next
 
 
 name_DSPSTORE:  db lo(name_DSPFETCH), hi(name_DSPFETCH)
                 db 4,'D','S','P','!'
 cw_DSPSTORE:    db lo(code_DSPSTORE), hi(code_DSPSTORE)
-code_DSPSTORE:  popab
+code_DSPSTORE:  pop_ba
                 mov d,a
                 jmp next
 
@@ -982,7 +963,7 @@ name_KEY:       db lo(name_DSPSTORE),hi(name_DSPSTORE)
 cw_KEY:         db lo(code_KEY),hi(code_KEY)
 code_KEY:       call _KEY
                 mvi b,0
-                pushab
+                pusb_ba
                 jmp next
 _KEY:           jmp buf_read
 
@@ -990,19 +971,19 @@ _KEY:           jmp buf_read
 name_NUMBER:    db lo(name_KEY),hi(name_KEY)
                 db 6,'N','U','M','B','E','R'
 cw_NUMBER:      db lo(code_NUMBER),hi(code_NUMBER)
-code_NUMBER:    popab
+code_NUMBER:    pop_ba
                 mov c,a
-                popab
+                pop_ba
                 call _NUMBER
                 mvi h,rstackpage        ; get value from rstackpage:value
                 mvi l,value
                 mov a,m
                 inr l
                 mov b,m
-                pushab                  ; push the value
+                pusb_ba                  ; push the value
                 mvi a,0
                 mvi b,0
-                pushab                  ; number of unparsed characters, 0 = noerror
+                pusb_ba                  ; number of unparsed characters, 0 = noerror
                 jmp next
 
                 ;; on entry BA is address of buffer, C is count
@@ -1036,10 +1017,10 @@ _NUMBER:        de_save
 
 _NUMBER_1:      e_save2
                 c_save
-                variable_ab value
+                variable_ba value
                 variable_c base
                 call multfunc
-                ab_variable value
+                ba_variable value
                 c_restore
                 e_restore2
                 consume_de
@@ -1079,13 +1060,13 @@ _NUMBER_5:      de_restore
 name_FIND:      db lo(name_NUMBER),hi(name_NUMBER)
                 db 4,'F','I','N','D'
 cw_FIND:        db lo(code_FIND),hi(code_FIND)
-code_FIND:      popab
+code_FIND:      pop_ba
                 mov c,a
-                popab
+                pop_ba
                 call _FIND
                 mov a,l
                 mov b,h
-                pushab
+                pusb_ba
                 jmp next
 
 _FIND:          de_save
@@ -1153,7 +1134,7 @@ _FIND2:         mvi h,rstackpage
 
                 m_to_hl                 ; HL = (m)
                 m_to_ba                 ; BA = ((m))
-                ab_variable testptr     ; store next word in testptr
+                ba_variable testptr     ; store next word in testptr
                 jmp _FIND1
 
 _FIND4:         de_restore
@@ -1165,9 +1146,9 @@ _FIND4:         de_restore
 name_TCFA:      db lo(name_FIND),hi(name_FIND)
                 db 4,'>','C','F','A'
 cw_TCFA:        db lo(code_TCFA),hi(code_TCFA)
-code_TCFA:      popab
+code_TCFA:      pop_ba
                 call _TCFA
-                pushab
+                pusb_ba
                 jmp next
 
 _TCFA:          mov l,a
@@ -1191,7 +1172,7 @@ _TCFA_NOWRAP1:                          ; BA = pointer to codeword
 name_EMIT:      db lo(name_TCFA),hi(name_TCFA)
                 db 4,'E','M','I','T'
 cw_EMIT:        db lo(code_EMIT),hi(code_EMIT)
-code_EMIT:      popab
+code_EMIT:      pop_ba
                 mvi b,0
                 call _EMIT
                 jmp next
@@ -1210,7 +1191,7 @@ code_WORD:      call _WORD              ; wordbuf=content, c=length
                 pushconst wordbuf_addr
                 mov a,c                 ; get length from C to A
                 mvi b,0
-                pushab
+                pusb_ba
                 jmp next
 _WORD:                                  ; Returns data in wordbuf, count in c
 _WORD1:         call _KEY
@@ -1247,30 +1228,30 @@ _WORD3:         call _KEY               ; For comments, eat everything until CR 
 name_DROP:      db lo(name_WORD),hi(name_WORD)
                 db 4,'D','R','O','P'
 cw_DROP:        db lo(code_DROP),hi(code_DROP)
-code_DROP:      popab
+code_DROP:      pop_ba
                 jmp next
 
 
 name_SWAP:      db lo(name_DROP),hi(name_DROP)
                 db 4,'S','W','A','P'
 cw_SWAP:        db lo(code_SWAP),hi(code_SWAP)
-code_SWAP:      popab
-                ab_variable temp1
-                popab
-                ab_variable temp2
-                variable_ab temp1
-                pushab
-                variable_ab temp2
-                pushab
+code_SWAP:      pop_ba
+                ba_variable temp1
+                pop_ba
+                ba_variable temp2
+                variable_ba temp1
+                pusb_ba
+                variable_ba temp2
+                pusb_ba
                 jmp next
 
 
 name_DUP:       db lo(name_SWAP),hi(name_SWAP)
                 db 3,'D','U','P'
 cw_DUP:         db lo(code_DUP),hi(code_DUP)
-code_DUP:       popab                   ; XXX optimize
-                pushab
-                pushab
+code_DUP:       pop_ba                   ; XXX optimize
+                pusb_ba
+                pusb_ba
                 jmp next
 
 
@@ -1284,43 +1265,43 @@ code_OVER:      mvi h,dstackpage
                 mov a,m                 ; get the next element LSB
                 inr l                   ; ... MSB
                 mov b,m
-                pushab
+                pusb_ba
                 jmp next
 
 
 name_ROT:       db lo(name_OVER),hi(name_OVER)
                 db  3,'R','O','T'
 cw_ROT:         db lo(code_ROT),hi(code_ROT)
-code_ROT:       popab
-                ab_variable temp1
-                popab
-                ab_variable temp2
-                popab
-                ab_variable temp3
-                variable_ab temp2
-                pushab
-                variable_ab temp1
-                pushab
-                variable_ab temp3
-                pushab
+code_ROT:       pop_ba
+                ba_variable temp1
+                pop_ba
+                ba_variable temp2
+                pop_ba
+                ba_variable temp3
+                variable_ba temp2
+                pusb_ba
+                variable_ba temp1
+                pusb_ba
+                variable_ba temp3
+                pusb_ba
                 jmp next
 
 
 name_NROT       db lo(name_ROT),hi(name_ROT)
                 db  4,'-','R','O','T'
 cw_NROT:        db lo(code_NROT),hi(code_NROT)
-code_NROT       popab
-                ab_variable temp1
-                popab
-                ab_variable temp2
-                popab
-                ab_variable temp3
-                variable_ab temp1
-                pushab
-                variable_ab temp3
-                pushab
-                variable_ab temp2
-                pushab
+code_NROT       pop_ba
+                ba_variable temp1
+                pop_ba
+                ba_variable temp2
+                pop_ba
+                ba_variable temp3
+                variable_ba temp1
+                pusb_ba
+                variable_ba temp3
+                pusb_ba
+                variable_ba temp2
+                pusb_ba
                 jmp next
 
 
@@ -1338,105 +1319,105 @@ name_2DUP:      db lo(name_2DROP),hi(name_2DROP)
                 db 4,'2','D','U','P'
 cw_2DUP:        db lo(code_2DUP),hi(code_2DUP)
 code_2DUP:      de_save
-                popab
-                ab_variable temp1
-                popab
-                ab_variable temp2
+                pop_ba
+                ba_variable temp1
+                pop_ba
+                ba_variable temp2
                 de_restore
-                variable_ab temp2
-                pushab
-                variable_ab temp1
-                pushab
+                variable_ba temp2
+                pusb_ba
+                variable_ba temp1
+                pusb_ba
                 jmp next
 
 
 name_2SWAP:     db lo(name_2DUP),hi(name_2DUP)
                 db 5,'2','S','W','A','P'
 cw_2SWAP:       db lo(code_2SWAP),hi(code_2SWAP)
-code_2SWAP:     popab
-                ab_variable temp1
-                popab
-                ab_variable temp2
-                popab
-                ab_variable temp3
-                popab
-                ab_variable temp4
-                variable_ab temp2
-                pushab
-                variable_ab temp1
-                pushab
-                variable_ab temp4
-                pushab
-                variable_ab temp3
-                pushab
+code_2SWAP:     pop_ba
+                ba_variable temp1
+                pop_ba
+                ba_variable temp2
+                pop_ba
+                ba_variable temp3
+                pop_ba
+                ba_variable temp4
+                variable_ba temp2
+                pusb_ba
+                variable_ba temp1
+                pusb_ba
+                variable_ba temp4
+                pusb_ba
+                variable_ba temp3
+                pusb_ba
                 jmp next
 
 
 name_QDUP:      db lo(name_2SWAP),hi(name_2SWAP)
                 db 4,'?','D','U','P'
 cw_QDUP:        db lo(code_QDUP),hi(code_QDUP)
-code_QDUP:      peekab
+code_QDUP:      peek_ba
                 mov c,a
                 ora b
                 jz _QDUP1
                 mov a,c
-                pushab
+                pusb_ba
 _QDUP1:         jmp next
 
 
 name_INCR:      db lo(name_QDUP),hi(name_QDUP)
                 db 2,'1','+'
 cw_INCR:        db lo(code_INCR),hi(code_INCR)
-code_INCR:      popab
+code_INCR:      pop_ba
                 adi 1
                 mov c,a
                 mov a,b
                 aci 0
                 mov b,a
                 mov a,c
-                pushab
+                pusb_ba
                 jmp next
 
 
 name_DECR:      db lo(name_INCR),hi(name_INCR)
                 db 2,'1','-'
 cw_DECR:        db lo(code_DECR),hi(code_DECR)
-code_DECR:      popab
+code_DECR:      pop_ba
                 sui 1
                 mov c,a
                 mov a,b
                 sbi 0
                 mov b,a
                 mov a,c
-                pushab
+                pusb_ba
                 jmp next
 
 
 name_INCR2:     db lo(name_DECR),hi(name_DECR)
                 db 2,'2','+'
 cw_INCR2:       db lo(code_INCR2),hi(code_INCR2)
-code_INCR2:     popab
+code_INCR2:     pop_ba
                 adi 2
                 mov c,a
                 mov a,b
                 aci 0
                 mov b,a
                 mov a,c
-                pushab
+                pusb_ba
                 jmp next
 
 
 name_DECR2:     db lo(name_INCR2),hi(name_INCR2)
                 db 2,'2','-'
 cw_DECR2:       db lo(code_DECR2),hi(code_DECR2)
-code_DECR2:     popab
+code_DECR2:     pop_ba
                 sui 2
                 mov c,a
                 mov a,b
                 sbi 0
                 mov b,a
                 mov a,c
-                pushab
+                pusb_ba
                 jmp next
 
 ;------------------------------------------------------------------------
@@ -1447,7 +1428,7 @@ code_DECR2:     popab
 name_ADD:       db lo(name_DECR2),hi(name_DECR2)
                 db 1,'+'
 cw_ADD:         db lo(code_ADD),hi(code_ADD)
-code_ADD:       popab                   ; BA = first operand
+code_ADD:       pop_ba                   ; BA = first operand
                 mov c,a                 ; BC = first operand
                 dstackptr_get           ; we will modify top-of-stack in place
                 mov a,m
@@ -1462,7 +1443,7 @@ code_ADD:       popab                   ; BA = first operand
 name_SUB:       db lo(name_ADD),hi(name_ADD)
                 db 1,'-'
 cw_SUB:         db lo(code_SUB),hi(code_SUB)
-code_SUB:       popab                   ; BA = first operand
+code_SUB:       pop_ba                   ; BA = first operand
                 mov c,a
                 mov a,m
                 sub c
@@ -1477,23 +1458,23 @@ name_MULT:      db lo(name_SUB),hi(name_SUB)
                 db 1,'*'
 cw_MULT:        db lo(code_MULT),hi(code_MULT)
 code_MULT:      e_save
-                popab
+                pop_ba
                 mov c,a
-                popab
+                pop_ba
                 call multfunc
-                pushab
+                pusb_ba
                 e_restore
                 jmp next
 
 name_DIVMOD:    db lo(name_MULT),hi(name_MULT)
                 db 4,'/','M','O','D'
 cw_DIVMOD:      db lo(code_DIVMOD),hi(code_DIVMOD)
-code_DIVMOD:    popab                   ; pop divisor
+code_DIVMOD:    pop_ba                   ; pop divisor
                 mov c,a
-                popab
+                pop_ba
                 div16_8
                 push_0c
-                pushab
+                pusb_ba
                 jmp next
 
 
@@ -1501,10 +1482,10 @@ name_EQUAL:     linklast DIVMOD
                 db 1,'='
 cw_EQUAL:       db lo(code_EQUAL),hi(code_EQUAL)
 code_EQUAL:     e_save
-                popab
+                pop_ba
                 mov c,b
                 mov e,a
-                popab
+                pop_ba
                 cmp e
                 jnz _EQUAL_NOT
                 mov a,b
@@ -1522,10 +1503,10 @@ name_NEQUAL:    linklast EQUAL
                 db 2,'<','>'
 cw_NEQUAL:      db lo(code_NEQUAL),hi(code_NEQUAL)
 code_NEQUAL:    e_save
-                popab
+                pop_ba
                 mov c,b
                 mov e,a
-                popab
+                pop_ba
                 cmp e
                 jnz _NEQUAL_YES
                 mov a,b
@@ -1543,10 +1524,10 @@ name_LT:        linklast NEQUAL
                 db 1,'<'
 cw_LT:          db lo(code_LT),hi(code_LT)
 code_LT:        e_save
-                popab
+                pop_ba
                 mov c,b
                 mov e,a         ; CE = first arg
-                popab           ; BA = second arg
+                pop_ba           ; BA = second arg
 
                 sub e           ; A = A - E
                 mov a,b
@@ -1566,10 +1547,10 @@ name_LTE:       linklast LT
                 db 2,'<','='
 cw_LTE:         db lo(code_LTE),hi(code_LTE)
 code_LTE:       e_save
-                popab
+                pop_ba
                 mov c,b
                 mov e,a         ; CE = first arg
-                popab           ; BA = second arg
+                pop_ba           ; BA = second arg
 
                 mov l,a
 
@@ -1597,10 +1578,10 @@ name_GT:        linklast LTE
                 db 1,'>'
 cw_GT:          db lo(code_GT),hi(code_GT)
 code_GT:        e_save
-                popab
+                pop_ba
                 mov c,b
                 mov e,a         ; CE = first arg
-                popab           ; BA = second arg
+                pop_ba           ; BA = second arg
 
                 ;; same code as LT, but we swap the args
                 ;; before comparing.
@@ -1632,10 +1613,10 @@ name_GTE:       linklast GT
                 db 2,'>','='
 cw_GTE:         db lo(code_GTE),hi(code_GTE)
 code_GTE:       e_save
-                popab
+                pop_ba
                 mov c,b
                 mov e,a         ; CE = first arg
-                popab           ; BA = second arg
+                pop_ba           ; BA = second arg
 
                 ;; same code as LTE, but we swap the args
                 ;; before comparing.
@@ -1673,7 +1654,7 @@ _GTE_NOT:       e_restore
 name_ZEQUAL:    linklast GTE
                 db 2,'0','='
 cw_ZEQUAL:      db lo(code_ZEQUAL),hi(code_ZEQUAL)
-code_ZEQUAL:    popab
+code_ZEQUAL:    pop_ba
                 ora b
                 jnz _ZEQUAL_NOT
                 pushconst 1
@@ -1685,7 +1666,7 @@ _ZEQUAL_NOT:    pushconst 0
 name_ZGT:       linklast ZEQUAL
                 db 2,'0','>'
 cw_ZGT:         db lo(code_ZGT),hi(code_ZGT)
-code_ZGT:       popab
+code_ZGT:       pop_ba
                 mov c,a
                 mov a,b
                 ora a
@@ -1701,7 +1682,7 @@ _ZGT_NOT:       pushconst 0
 name_ZLT:       linklast ZGT
                 db 2,'0','<'
 cw_ZLT:         db lo(code_ZLT),hi(code_ZLT)
-code_ZLT:       popab
+code_ZLT:       pop_ba
                 mov c,a
                 mov a,b
                 ora a
@@ -1717,7 +1698,7 @@ _ZLT_NOT:       pushconst 0
 name_AND:       linklast ZLT
                 db 3,'A','N','D'
 cw_AND:         db lo(code_AND),hi(code_AND)
-code_AND:       popab                   ; BA = first operand
+code_AND:       pop_ba                   ; BA = first operand
                 mov c,a                 ; BC = first operand
                 dstackptr_get           ; we will modify top-of-stack in place
                 mov a,m
@@ -1733,7 +1714,7 @@ code_AND:       popab                   ; BA = first operand
 name_OR:        linklast AND
                 db 2,'O','R'
 cw_OR:          db lo(code_OR),hi(code_OR)
-code_OR:        popab                   ; BA = first operand
+code_OR:        pop_ba                   ; BA = first operand
                 mov c,a                 ; BC = first operand
                 dstackptr_get           ; we will modify top-of-stack in place
                 mov a,m
@@ -1749,7 +1730,7 @@ code_OR:        popab                   ; BA = first operand
 name_XOR:       linklast OR
                 db 3,'X','O','R'
 cw_XOR:         db lo(code_XOR),hi(code_XOR)
-code_XOR:       popab                   ; BA = first operand
+code_XOR:       pop_ba                   ; BA = first operand
                 mov c,a                 ; BC = first operand
                 dstackptr_get           ; we will modify top-of-stack in place
                 mov a,m
@@ -1765,14 +1746,14 @@ code_XOR:       popab                   ; BA = first operand
 name_INVERT:    linklast XOR
                 db 6,'I','N','V','E','R','T'
 cw_INVERT:      db lo(code_INVERT),hi(code_INVERT)
-code_INVERT:    popab                   ; BA = first operand
+code_INVERT:    pop_ba                   ; BA = first operand
                 xri 0FFH
                 mov c,a
                 mov a,b
                 xri 0FFH
                 mov b,a
                 mov a,c
-                pushab
+                pusb_ba
                 jmp next
 
 
@@ -1810,7 +1791,7 @@ code_LIT:
                 mvi l,cur
                 m_to_hl                 ; HL=(cur)
                 m_to_ba                 ; AB=((cur))
-                pushab                  ; push to data stack
+                pusb_ba                  ; push to data stack
                 double_inc_cur next     ; cur+=2 and jump to next
 
 
@@ -1822,10 +1803,10 @@ name_STORE:     db lo(name_LIT),hi(name_LIT)
                 db 1,'!'
 cw_STORE:       db lo(code_STORE),hi(code_STORE)
 code_STORE:     e_save
-                popab
+                pop_ba
                 mov c,b                 ; CE = address
                 mov e,a
-                popab
+                pop_ba
                 mov h,c
                 mov l,e
                 ba_to_m
@@ -1836,11 +1817,11 @@ code_STORE:     e_save
 name_FETCH:     db lo(name_STORE),hi(name_STORE)
                 db 1,'@'
 cw_FETCH:       db lo(code_FETCH),hi(code_FETCH)
-code_FETCH:     popab
+code_FETCH:     pop_ba
                 mov h,b                 ; Set HL to BA
                 mov l,a
                 m_to_ba
-                pushab                  ; push it
+                pusb_ba                  ; push it
                 jmp next
 
 
@@ -1848,10 +1829,10 @@ name_ADDSTORE:  linklast FETCH
                 db 2,'+','!'
 cw_ADDSTORE:    db lo(code_ADDSTORE),hi(code_ADDSTORE)
 code_ADDSTORE:  e_save
-                popab
+                pop_ba
                 mov c,b                 ; CE = address
                 mov e,a
-                popab                   ; BA = amount
+                pop_ba                   ; BA = amount
                 mov h,c
                 mov l,e
 
@@ -1869,10 +1850,10 @@ name_STOREBYTE: linklast ADDSTORE
                 db 2,'C','!'
 cw_STOREBYTE:   db lo(code_STOREBYTE),hi(code_STOREBYTE)
 code_STOREBYTE: e_save
-                popab
+                pop_ba
                 mov c,b                 ; CE = address
                 mov e,a
-                popab
+                pop_ba
                 mov h,c
                 mov l,e
                 mov m,a                 ; store A in CE
@@ -1882,12 +1863,12 @@ code_STOREBYTE: e_save
 name_FETCHBYTE: linklast STOREBYTE
                 db 2,'C','G'
 cw_FETCHBYTE:   db lo(code_FETCHBYTE),hi(code_FETCHBYTE)
-code_FETCHBYTE: popab
+code_FETCHBYTE: pop_ba
                 mov h,b
                 mov l,a
                 mov a,m
                 mvi b,0
-                pushab
+                pusb_ba
                 jmp next
 
 ;------------------------------------------------------------------------
@@ -1943,14 +1924,14 @@ name_CREATE:    db lo(name_QUIT),hi(name_QUIT)
                 db 6,'C','R','E','A','T','E'
 cw_CREATE:      db lo(code_CREATE),hi(code_CREATE)
 code_CREATE:    de_save
-                popab
+                pop_ba
                 mov c,a                 ; C = length
-                popab                   ; AB = address of name
-                ab_variable temp1       ; save AB to temp1
+                pop_ba                   ; AB = address of name
+                ba_variable temp1       ; save AB to temp1
 
                 variable_de here        ; get HERE into DE
 
-                variable_ab latest      ; get LATEST into AB
+                variable_ba latest      ; get LATEST into AB
                 uni_dehl
                 mov m,a                 ; store LATEST LSB
                 inr_hl
@@ -1960,7 +1941,7 @@ code_CREATE:    de_save
                 inr_hl
                 uni_hlde                ; DE = here+3
 
-                variable_ab temp1       ; address of name
+                variable_ba temp1       ; address of name
                 mov h,b
                 mov l,a                 ; HL = source address
 
@@ -1973,8 +1954,8 @@ _CREATE_LOOP:   mov a,m
                 dcr c
                 jnz _CREATE_LOOP
 
-                variable_ab here        ; AB = HERE
-                ab_variable latest      ; LATEST = HERE
+                variable_ba here        ; AB = HERE
+                ba_variable latest      ; LATEST = HERE
                 de_variable here
 
                 de_restore
@@ -1988,7 +1969,7 @@ _CREATE_LOOP:   mov a,m
 name_COMMA:     db lo(name_CREATE),hi(name_CREATE)
                 db 1,','
 cw_COMMA:       db lo(code_COMMA),hi(code_COMMA)
-code_COMMA:     popab
+code_COMMA:     pop_ba
                 call _COMMA
                 jmp next
 
@@ -2054,7 +2035,7 @@ cw_SEMICOLON:   db lo(DOCOL),hi(DOCOL)
 name_IMMEDIATE: db lo(name_SEMICOLON),hi(name_SEMICOLON)
                 db 9,'I','M','M','E','D','I','A','T','E'
 cw_IMMEDIATE:   db lo(code_IMMEDIATE),hi(code_IMMEDIATE)
-code_IMMEDIATE: variable_ab latest
+code_IMMEDIATE: variable_ba latest
                 mov h,b
                 mov l,a
                 double_inc_hl
@@ -2067,7 +2048,7 @@ code_IMMEDIATE: variable_ab latest
 name_HIDDEN:    db lo(name_IMMEDIATE),hi(name_IMMEDIATE)
                 db 6,'H','I','D','D','E','N'
 cw_HIDDEN:      db lo(code_HIDDEN),hi(code_HIDDEN)
-code_HIDDEN:    pophl                   ; get address of word
+code_HIDDEN:    pop_hl                   ; get address of word
                 double_inc_hl           ; skip the link and point to the name/flags
                 mov a,m
                 xri F_HIDDEN
@@ -2091,7 +2072,7 @@ code_TICK:      mvi h,rstackpage        ; NOTE: identical to the code for LIT
                 mvi l,cur
                 m_to_hl                 ; HL=(cur)
                 m_to_ba                 ; AB=((cur))
-                pushab                  ; push to data stack
+                pusb_ba                  ; push to data stack
                 double_inc_cur next     ; cur+=2 and jump to next
 
 
@@ -2129,7 +2110,7 @@ code_BRANCH:    mvi h,rstackpage
 name_ZBRANCH:   db lo(name_BRANCH),hi(name_BRANCH)
                 db 7,'0','B','R','A','N','C','H'
 cw_ZBRANCH:     db lo(code_ZBRANCH),hi(code_ZBRANCH)
-code_ZBRANCH:   popab
+code_ZBRANCH:   pop_ba
                 ora b
                 jz code_BRANCH
                 double_inc_cur next     ; cur+=2 and jump to next
@@ -2138,13 +2119,13 @@ code_ZBRANCH:   popab
 name_LITSTRING: db lo(name_ZBRANCH),hi(name_ZBRANCH)
                 db 9,'L','I','T','S','T','R','I','N','G'
 cw_LITSTRING:   db lo(code_LITSTRING), hi(code_LITSTRING)
-code_LITSTRING: variable_ab cur         ; AB = address of length of string
+code_LITSTRING: variable_ba cur         ; AB = address of length of string
                 mov h,b
                 mov l,a                 ; HL = address of length of string
                 mov c,m                 ; C = length of string
                 double_inc_cur _LIT1    ; skip over string length
-_LIT1:          variable_ab cur         ; AB = address of string
-                pushab                  ; push address of string
+_LIT1:          variable_ba cur         ; AB = address of string
+                pusb_ba                  ; push address of string
                 mvi h,rstackpage
                 mvi l,cur
                 mov a,m                 ; get LSB of cur
@@ -2161,9 +2142,9 @@ _LIT1:          variable_ab cur         ; AB = address of string
 name_TELL:      db lo(name_LITSTRING),hi(name_LITSTRING)
                 db 4,'T','E','L','L'
 cw_TELL:        db lo(code_TELL), hi(code_TELL)
-code_TELL:      popab
+code_TELL:      pop_ba
                 mov c,a
-                popab
+                pop_ba
                 mov l,a
                 mov h,b
                 mov a,c                 ; test the length byte
@@ -2186,15 +2167,15 @@ code_BYE:       hlt
 name_DO:        linklast BYE
                 db 2,'D','O'
 cw_DO:          db lo(code_DO),hi(code_DO)
-code_DO:        popab                   ; initial
-                rspushab                ; push onto return stack
+code_DO:        pop_ba                   ; initial
+                rspusb_ba                ; push onto return stack
                 mvi a,1
                 mvi b,0
-                rspushab                ; increment
-                popab                   ; limit
-                rspushab                ; push onto return stack
-                variable_ab cur
-                rspushab                ; push onto return stack
+                rspusb_ba                ; increment
+                pop_ba                   ; limit
+                rspusb_ba                ; push onto return stack
+                variable_ba cur
+                rspusb_ba                ; push onto return stack
                 jmp next
 
 name_LOOP:      linklast DO
@@ -2289,13 +2270,13 @@ LOOP_CONT:      de_restore
                 mov a,m
                 inr l
                 mov b,m
-                ab_variable cur
+                ba_variable cur
                 jmp next
 
 name_PLUSLOOP:  linklast LOOP
                 db 5,'+','L','O','O','P'
 cw_PLUSLOOP:    db lo(code_PLUSLOOP),hi(code_PLUSLOOP)
-code_PLUSLOOP:  popab
+code_PLUSLOOP:  pop_ba
                 mvi h,rstackpage
                 rstackptr_get           ; starts pointing at loop address
                 inr l
@@ -2320,7 +2301,7 @@ code_I:         rstackptr_get           ; should be pointing at loop address
                 mov a,m
                 inr l
                 mov b,m
-                pushab
+                pusb_ba
                 jmp next
 
 
@@ -2341,7 +2322,7 @@ code_INTERPRET: call _WORD              ; returns word in wordbuf, length in C
 
                 mov c,m                 ; get the flags into C
                 call _TCFA_ATLEN
-                ab_variable callee      ; save it to temp1 for good safe keeping
+                ba_variable callee      ; save it to temp1 for good safe keeping
                 mov a,c                 ; restore flags to A
                 ani F_IMMED
                 jnz _INTERP4            ; immediate - go to execute
@@ -2360,11 +2341,11 @@ _INTERP1:       islit_set
 _INTERP2:       state_check
                 jz _INTERP4             ; executing
 
-                variable_ab callee
+                variable_ba callee
                 call _COMMA
                 islit_check
                 jz _INTERP3             ; not literal
-                value_ab
+                variable_ba value
                 call _COMMA
 _INTERP3:       jmp next
 
@@ -2374,8 +2355,8 @@ _INTERP4:       islit_check
                 variable_hl callee      ; get the address of the codeword back into HL
                 jmp_hl_indir
 
-_INTERP5:       value_ab
-                pushab
+_INTERP5:       variable_ba value
+                pusb_ba
                 jmp next
 
 _INTERP6:       jmp fault_token;
@@ -2392,14 +2373,14 @@ code_CHAR:      call _WORD
                 mvi l,wordbuf
                 mov a,m
                 mvi b,0
-                pushab
+                pusb_ba
                 jmp next
 
 
 name_EXECUTE:   db lo(name_CHAR),hi(name_CHAR)
                 db 7,'E','X','E','C','U','T','E'
 cw_EXECUTE:     db lo(code_EXECUTE),hi(code_EXECUTE)
-code_EXECUTE:   popab                   ; get execution token
+code_EXECUTE:   pop_ba                   ; get execution token
                 mov h,b
                 mov l,a
                 m_to_ba                 ; deference execution token
@@ -2414,7 +2395,7 @@ code_EXECUTE:   popab                   ; get execution token
 name_OUT:       linklast EXECUTE
                 db 3,"OUT"
 cw_OUT:         db lo(code_OUT),hi(code_OUT)
-code_OUT:       popab                   ; get the port address into A
+code_OUT:       pop_ba                   ; get the port address into A
                 ani 00011111B           ; construct the "OUT" instruction
                 rlc
                 ori 01000001B
@@ -2424,7 +2405,7 @@ code_OUT:       popab                   ; get the port address into A
                 inr l
                 mvi m,07H               ; store the "RET" instruction at jmp_addr+1
                 mov a,b
-                popab                   ; get the value in A
+                pop_ba                   ; get the value in A
                 call jmpa_addr
                 jmp next
 
@@ -2433,7 +2414,7 @@ LASTWORD_KERNEL:
 name_IN:        linklast OUT
                 db 2,"IN"
 cw_IN:          db lo(code_IN),hi(code_IN)
-code_IN:        popab
+code_IN:        pop_ba
                 ani 00000111B
                 rlc
                 ori 01000001B
@@ -2444,7 +2425,7 @@ code_IN:        popab
                 mvi m,07H                 ; store the "RET" instruction at jmp_addr+1
                 call jmpa_addr            ; execute the "IN" instruction
                 mvi b,0
-                pushab                    ; save to the stack
+                pusb_ba                    ; save to the stack
                 jmp next
 
                 include "forth-extra.inc"

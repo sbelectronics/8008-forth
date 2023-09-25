@@ -137,14 +137,14 @@ cw_NEGATE:      db lo(DOCOL), hi(DOCOL)
 name_TRUE:      linklast NEGATE
                 db 4,'T','R','U','E'
 cw_TRUE:        codeword_DOCOL
-                cwlit 1
+                cw_lit 1
                 cw EXIT
 
 
 name_FALSE:     linklast TRUE
                 db 5,'F','A','L','S','E'
 cw_FALSE:       codeword_DOCOL
-                cwlit 0
+                cw_lit 0
                 cw EXIT
 
 
@@ -190,7 +190,7 @@ cw_IF:          codeword_DOCOL
                 cw COMMA
                 cw HERE
                 cw FETCH
-                cwlit 0
+                cw_lit 0
                 cw COMMA
                 cw EXIT
 
@@ -214,7 +214,7 @@ cw_ELSE:        codeword_DOCOL
                 cw COMMA
                 cw HERE
                 cw FETCH
-                cwlit 0
+                cw_lit 0
                 cw COMMA
                 cw SWAP
                 cw DUP
@@ -265,7 +265,7 @@ cw_WHILE:       codeword_DOCOL
                 cw COMMA
                 cw HERE
                 cw FETCH
-                cwlit 0
+                cw_lit 0
                 cw COMMA
                 cw EXIT
 
@@ -303,7 +303,7 @@ cw_UNLESS:      codeword_DOCOL
 name_LPAREN:    linklast UNLESS
                 db 1|F_IMMED,'('
 cw_LPARAM:      codeword_DOCOL
-                cwlit 1
+                cw_lit 1
                 cw KEY
                 cw DUP
                 cw LPCONST
@@ -345,7 +345,7 @@ name_PICK:      linklast TUCK
                 db 4,"PICK"
 cw_PICK:        codeword_DOCOL
                 cw INCR
-                cwlit 0002
+                cw_lit 0002
                 cw MULT
                 cw DSPFETCH
                 cw ADD
@@ -369,7 +369,7 @@ cw_SPACES:      codeword_DOCOL
 name_DECIMAL:   linklast SPACES
                 db 7,'D','E','C','I','M','A','L'
 cw_DECIMAL:     codeword_DOCOL
-                cwlit 10
+                cw_lit 10
                 cw BASE
                 cw store
                 cw EXIT
@@ -377,7 +377,7 @@ cw_DECIMAL:     codeword_DOCOL
 name_HEX:       linklast DECIMAL
                 db 3,'H','E','X'
 cw_HEX:         codeword_DOCOL
-                cwlit 16
+                cw_lit 16
                 cw BASE
                 cw store
                 cw EXIT
@@ -393,14 +393,14 @@ cw_UDOT0:       codeword_DOCOL
                 dw 4H
                 cw UDOT0
                 cw DUP
-                cwlit 0AH
+                cw_lit 0AH
                 cw LT
                 cw ZBRANCH
                 dw 08H
                 cw ZEROCONST
                 cw BRANCH
                 dw 0AH
-                cwlit 0AH
+                cw_lit 0AH
                 cw SUB
                 cw ACONST
                 cw ADD
@@ -440,7 +440,7 @@ cw_UWIDTH:      codeword_DOCOL
                 cw INCR
                 cw BRANCH
                 dw 06H
-                cwlit 1
+                cw_lit 1
                 cw EXIT
 
 name_UR:        linklast UWIDTH
@@ -466,13 +466,13 @@ cw_DOTR:        codeword_DOCOL
                 cw ZBRANCH
                 dw 12H
                 cw NEGATE
-                cwlit 1
+                cw_lit 1
                 cw SWAP
                 cw ROT
                 cw DECR
                 cw BRANCH
                 dw 0AH
-                cwlit 0
+                cw_lit 0
                 cw SWAP
                 cw ROT
                 cw SWAP
@@ -493,7 +493,7 @@ cw_DOTR:        codeword_DOCOL
 name_DOT:       linklast DOTR
                 db 1,'.'
 cw_DOT:         codeword_DOCOL
-                cwlit 0
+                cw_lit 0
                 cw DOTR
                 cw SPACE
                 cw EXIT
@@ -565,7 +565,7 @@ cw_CCOMMA:      codeword_DOCOL
                 cw HERE
                 cw FETCH
                 cw STOREBYTE
-                cwlit 1
+                cw_lit 1
                 cw HERE
                 cw ADDSTORE
                 cw EXIT
@@ -582,7 +582,7 @@ cw_SSTORE:      codeword_DOCOL
                 cw COMMA
                 cw HERE
                 cw FETCH
-                cwlit 0
+                cw_lit 0
                 cw COMMA
                 cw KEY
                 cw DUP
@@ -682,14 +682,14 @@ cw_ALLOT:       codeword_DOCOL
 name_CELLS:     linklast ALLOT
                 db 5,'C','E','L','L','S'
 cw_CELLS:       codeword_DOCOL
-                cwlit 2
+                cw_lit 2
                 cw MULT
                 cw EXIT
 
 name_VARIABLE:  linklast CELLS
                 db 8,'V','A','R','I','A','B','L','E'
 cw_VARIABLE:    codeword_DOCOL
-                cwlit 1
+                cw_lit 1
                 cw CELLS
                 cw ALLOT
                 cw WORD
@@ -831,7 +831,7 @@ cw_FORGET:      codeword_DOCOL
 name_CASE:      linklast FORGET
                 db 4|F_IMMED,"CASE"
 cw_CASE:        codeword_DOCOL
-                cwlit 0000
+                cw_lit 0000
                 cw EXIT
 
 name_OF:        linklast CASE
@@ -885,7 +885,7 @@ cw_CFAT:        codeword_DOCOL
                 dw 0016H
                 cw 2DUP
                 cw SWAP
-                cwlit 0021
+                cw_lit 0021
                 cw SUB
                 cw GT
                 cw ZBRANCH
@@ -896,7 +896,7 @@ cw_CFAT:        codeword_DOCOL
                 cw BRANCH
                 dw -028H
                 cw DROP
-                cwlit 0000
+                cw_lit 0000
                 cw EXIT
 
 LASTWORD_EXTRA:
@@ -909,7 +909,7 @@ cw_SEE:         codeword_DOCOL
                 cw FETCH
                 cw LATEST
                 cw FETCH
-                cwlit 0002H
+                cw_lit 0002H
                 cw PICK
                 cw OVER
                 cw NEQUAL
@@ -950,7 +950,7 @@ cw_SEE:         codeword_DOCOL
                 cw ZBRANCH
                 dw 0014H
                 cw DROP
-                cwlit 0002H
+                cw_lit 0002H
                 cw ADD
                 cw DUP
                 cw FETCH
@@ -964,17 +964,17 @@ cw_SEE:         codeword_DOCOL
                 cw ZBRANCH
                 dw 003CH
                 cw DROP
-                cwlit 0053H
+                cw_lit 0053H
                 cw EMIT
                 cw DQCONST
                 cw EMIT
                 cw SPACE
-                cwlit 0002H
+                cw_lit 0002H
                 cw ADD
                 cw DUP
                 cw FETCH
                 cw SWAP
-                cwlit 0002H
+                cw_lit 0002H
                 cw ADD
                 cw SWAP
                 cw 2DUP
@@ -984,7 +984,7 @@ cw_SEE:         codeword_DOCOL
                 cw SPACE
                 cw ADD
                 cw ALIGNED
-                cwlit 0002H
+                cw_lit 0002H
                 cw SUB
                 cw BRANCH
                 dw 00CCH
@@ -999,7 +999,7 @@ cw_SEE:         codeword_DOCOL
                 dw 000AH
                 db "0BRANCH ( "
                 cw TELL
-                cwlit 0002H
+                cw_lit 0002H
                 cw ADD
                 cw DUP
                 cw FETCH
@@ -1021,7 +1021,7 @@ cw_SEE:         codeword_DOCOL
                 dw 0009H
                 db "BRANCH ( "
                 cw TELL
-                cwlit 0002H
+                cw_lit 0002H
                 cw ADD
                 cw DUP
                 cw FETCH
@@ -1039,10 +1039,10 @@ cw_SEE:         codeword_DOCOL
                 cw ZBRANCH
                 dw 0020H
                 cw DROP
-                cwlit 0027H
+                cw_lit 0027H
                 cw EMIT
                 cw SPACE
-                cwlit 0002H
+                cw_lit 0002H
                 cw ADD
                 cw DUP
                 cw FETCH
@@ -1059,7 +1059,7 @@ cw_SEE:         codeword_DOCOL
                 dw 0021H
                 cw DROP
                 cw 2DUP
-                cwlit 0002H
+                cw_lit 0002H
                 cw ADD
                 cw NEQUAL
                 cw ZBRANCH
@@ -1075,7 +1075,7 @@ cw_SEE:         codeword_DOCOL
                 cw IDDOT
                 cw SPACE
                 cw DROP
-                cwlit 0002H
+                cw_lit 0002H
                 cw ADD
                 cw BRANCH
                 dw -142H

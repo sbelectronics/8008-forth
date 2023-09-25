@@ -123,7 +123,7 @@ def main():
             continue
 
         if isint(w):
-            func.append( "\t\tcwlit %04XH" % int(w))
+            func.append( "\t\tcw_lit %04XH" % int(w))
             w = nextword()
             continue
 
