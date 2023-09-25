@@ -985,14 +985,6 @@ code_KEY:       call _KEY
                 pushab
                 jmp next
 _KEY:           jmp buf_read
-;_KEY:           call CINP              ; This would be for "RAW" mode
-;                ani 07FH
-;                cpi CR
-;                jnz notCR
-;                mvi a,LF
-;                call _EMIT
-;                mvi a,CR
-;notCR:          ret
 
 
 name_NUMBER:    db lo(name_KEY),hi(name_KEY)
@@ -2185,47 +2177,7 @@ _TELL_LOOP:     mov a,m
                 jmp next
 
 
-name_PRHEX:     db lo(name_TELL),hi(name_TELL)
-                db 5,'P','R','H','E','X'
-cw_PRHEX:       db lo(code_PRHEX),hi(code_PRHEX)
-code_PRHEX:     popab
-                a_save
-                mov a,b
-                call write_hex
-                a_restore
-                call write_hex
-                jmp next
-
-
-name_PRSTACK:   db lo(name_PRHEX),hi(name_PRHEX)
-                db 7,'P','R','S','T','A','C','K'
-cw_PRSTACK:     db lo(code_PRSTACK),hi(code_PRSTACK)
-
-code_PRSTACK:   call write_crlf
-                mvi h,dstackpage
-                dstackptr_get
-
-PRSTACK_LOOP:   mov a,l
-                cpi dstack_top
-                jz PRSTACK_DONE
-
-                inr l                   ; point at the MSB
-                mov a,m
-                call write_hex
-                dcr l                   ; now back to the LSB
-                mov a,m
-                call write_hex
-                inr l                   ; point to the next cell
-                inr l
-                mvi a,' '
-                call _EMIT
-                jmp PRSTACK_LOOP
-
-PRSTACK_DONE:   call write_crlf
-                jmp next
-
-
-name_BYE:       db lo(name_PRSTACK),hi(name_PRSTACK)
+name_BYE:       db lo(name_TELL),hi(name_TELL)
                 db 3,'B','Y','E'
 cw_BYE:         db lo(code_BYE),hi(code_BYE)
 code_BYE:       hlt
@@ -2444,7 +2396,6 @@ code_CHAR:      call _WORD
                 jmp next
 
 
-LASTWORD_KERNEL:
 name_EXECUTE:   db lo(name_CHAR),hi(name_CHAR)
                 db 7,'E','X','E','C','U','T','E'
 cw_EXECUTE:     db lo(code_EXECUTE),hi(code_EXECUTE)
@@ -2459,6 +2410,43 @@ code_EXECUTE:   popab                   ; get execution token
                 mov m,b
                 jmp jmpa_jump
 
+
+name_OUT:       linklast EXECUTE
+                db 3,"OUT"
+cw_OUT:         db lo(code_OUT),hi(code_OUT)
+code_OUT:       popab
+                mov c,a
+                popab
+                mov a,c                     ; recall the address from C
+                ani 00011111B               ; construct the "OUT" instruction
+                rlc
+                ori 01000001B
+                mvi h,hi(jmpa_addr)
+                mvi l,lo(jmpa_addr)
+                mov m,a                   ; store the "OUT" instruction at jmp_addr
+                inr l
+                mvi m,07H                 ; store the "RET" instruction at jmp_addr+1
+                call jmpa_addr
+                jmp next
+
+
+LASTWORD_KERNEL:
+name_IN:        linklast OUT
+                db 2,"IN"
+cw_IN:          db lo(code_IN),hi(code_IN)
+code_IN:        popab
+                ani 00000111B
+                rlc
+                ori 01000001B
+                mvi h,hi(jmpa_addr)
+                mvi l,lo(jmpa_addr)
+                mov m,a                   ; store the "IN" instruction at jmp_addr
+                inr l
+                mvi m,07H                 ; store the "RET" instruction at jmp_addr+1
+                call jmpa_addr            ; execute the "IN" instruction
+                mvi b,0
+                pushab                    ; save to the stack
+                jmp next
 
                 include "forth-extra.inc"
 

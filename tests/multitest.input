@@ -1,20 +1,20 @@
 : clearstack s0 @ dsp! ;
 
-( 0100 ) version prstack
+( 256 ) version .S
 
-( 0006 ) clearstack 5 1+ prstack
+( 6 ) clearstack 5 1+ .S
 
-( 000D ) clearstack 11 2+ prstack
+( 13 ) clearstack 11 2+ .S
 
-( 0004 ) clearstack 5 1- prstack
+( 4 ) clearstack 5 1- .S
 
-( 0009 ) clearstack 11 2- prstack
+( 9 ) clearstack 11 2- .S
 
-( 0042 ) clearstack 33 2 * prstack
+( 66 ) clearstack 33 2 * .S
 
-( 0010 ) clearstack 33 2 / prstack
+( 16 ) clearstack 33 2 / .S
 
-( 0001 ) clearstack 33 2 mod prstack
+( 1 ) clearstack 33 2 mod .S
 
 ( 1000 ) clearstack 10 100 * .
 
@@ -66,9 +66,9 @@
 
 ( 1234 4321 ABCD FEED FACE 64206 65261 43981 17185 4660 ) clearstack hex 1234 4321 ABCD FEED FACE .S decimal .S
 
-( 0002 ) clearstack : foo 0 if 001 else 002 then ; foo prstack
+( 2 ) clearstack : foo 0 if 001 else 002 then ; foo .S
 
-( 0001 ) clearstack : bar 1 if 001 else 002 then ; bar prstack
+( 1 ) clearstack : bar 1 if 001 else 002 then ; bar .s
 
 ( XXX ) : whiletest 3 BEGIN [ CHAR X ] LITERAL EMIT 1- DUP 0= UNTIL ; whiletest
 

@@ -6,38 +6,22 @@ https://www.smbaker.com/
 
 : clearstack s0 @ dsp! ;
 
-( 0100 ) version prstack
-
-0100 
-
-( 0006 ) clearstack 5 1+ prstack
-
-0006 
-
-( 000D ) clearstack 11 2+ prstack
-
-000D 
-
-( 0004 ) clearstack 5 1- prstack
-
-0004 
-
-( 0009 ) clearstack 11 2- prstack
-
-0009 
-
-( 0042 ) clearstack 33 2 * prstack
-
-0042 
-
-( 0010 ) clearstack 33 2 / prstack
-
-0010 
-
-( 0001 ) clearstack 33 2 mod prstack
-
-0001 
-
+( 256 ) version .S
+256 
+( 6 ) clearstack 5 1+ .S
+6 
+( 13 ) clearstack 11 2+ .S
+13 
+( 4 ) clearstack 5 1- .S
+4 
+( 9 ) clearstack 11 2- .S
+9 
+( 66 ) clearstack 33 2 * .S
+66 
+( 16 ) clearstack 33 2 / .S
+16 
+( 1 ) clearstack 33 2 mod .S
+1 
 ( 1000 ) clearstack 10 100 * .
 1000 
 ( 1111 ) clearstack 11 101 * .
@@ -88,14 +72,10 @@ https://www.smbaker.com/
 EDCB 
 ( 1234 4321 ABCD FEED FACE 64206 65261 43981 17185 4660 ) clearstack hex 1234 4321 ABCD FEED FACE .S decimal .S
 FACE FEED ABCD 4321 1234 64206 65261 43981 17185 4660 
-( 0002 ) clearstack : foo 0 if 001 else 002 then ; foo prstack
-
-0002 
-
-( 0001 ) clearstack : bar 1 if 001 else 002 then ; bar prstack
-
-0001 
-
+( 2 ) clearstack : foo 0 if 001 else 002 then ; foo .S
+2 
+( 1 ) clearstack : bar 1 if 001 else 002 then ; bar .s
+1 
 ( XXX ) : whiletest 3 BEGIN [ CHAR X ] LITERAL EMIT 1- DUP 0= UNTIL ; whiletest
 XXX
 ( X  Y ) : spacestest [ char x ] LITERAL EMIT 2 SPACES [ char y ] LITERAL EMIT ; spacestest
@@ -135,12 +115,12 @@ directtextfunc
 ( 3 5 4 3 2 1  ) clearstack 1 2 3 4 5 2 PICK . .S
 3 5 4 3 2 1 
 words
-dotest7 dotest6 dotest5 dotest4 dotest3 dotest2 dotest1 VAL foo ten directtexttest texttest spacestest whiletest bar foo clearstack SEE CFA> ENDCASE ENDOF OF CASE FORGET WORDS ?IMMEDIATE ?HIDDEN ID. TO >DFA VALUE VARIABLE CELLS ALLOT CONSTANT ." S" C, ALIGN ALIGNED DEPTH WITHIN ? U. . .R U.R UWIDTH .S U. HEX DECIMAL SPACES PICK TUCK NIP ( UNLES REPEAT WHILE AGAIN UNTIL BEGIN ELSE THEN IF [RECURSE] [COMPILE] LITERAL NOT FALSE TRUE NEGATE SPACE CR BL ';' ':' '"' '-' 'A' '0' ')' '(' '\n' MOD / EXECUTE CHAR INTERPRET I +LOOP LOOP DO BYE PRSTACK PRHEX TELL LITSTRING 0BRANCH BRANCH ' HIDE HIDDEN IMMEDIATE ; : ] [ , CREATE QUIT BASE S0 LATEST HERE STATE CG C! +! @ ! LIT EXIT INVERT XOR OR AND 0< 0> 0= >= > <= < <> = /MOD * - + 2- 2+ 1- 1+ ?DUP 2SWAP 2DUP 2DROP -ROT ROT OVER DUP SWAP DROP WORD EMIT >CFA FIND NUMBER KEY DSP! DSP@ RSP! RSP@ R> >R F_LENMASK F_HIDDEN F_IMMED DOCOL R0 VERSION 
+dotest7 dotest6 dotest5 dotest4 dotest3 dotest2 dotest1 VAL foo ten directtexttest texttest spacestest whiletest bar foo clearstack SEE CFA> ENDCASE ENDOF OF CASE FORGET WORDS ?IMMEDIATE ?HIDDEN ID. TO >DFA VALUE VARIABLE CELLS ALLOT CONSTANT ." S" C, ALIGN ALIGNED DEPTH WITHIN ? U. . .R U.R UWIDTH .S U. HEX DECIMAL SPACES PICK TUCK NIP ( UNLESS REPEAT WHILE AGAIN UNTIL BEGIN ELSE THEN IF [RECURSE] [COMPILE] LITERAL NOT FALSE TRUE NEGATE SPACE CR BL ';' ':' '"' '-' 'A' '0' ')' '(' '\n' MOD / IN OUT EXECUTE CHAR INTERPRET I +LOOP LOOP DO BYE TELL LITSTRING 0BRANCH BRANCH ' HIDE HIDDEN IMMEDIATE ; : ] [ , CREATE QUIT BASE S0 LATEST HERE STATE CG C! +! @ ! LIT EXIT INVERT XOR OR AND 0< 0> 0= >= > <= < <> = /MOD * - + 2- 2+ 1- 1+ ?DUP 2SWAP 2DUP 2DROP -ROT ROT OVER DUP SWAP DROP WORD EMIT >CFA FIND NUMBER KEY DSP! DSP@ RSP! RSP@ R> >R F_LENMASK F_HIDDEN F_IMMED DOCOL R0 VERSION 
 
 forget spacestest
 
 words
-whiletest bar foo clearstack SEE CFA> ENDCASE ENDOF OF CASE FORGET WORDS ?IMMEDIATE ?HIDDEN ID. TO >DFA VALUE VARIABLE CELLS ALLOT CONSTANT ." S" C, ALIGN ALIGNED DEPTH WITHIN ? U. . .R U.R UWIDTH .S U. HEX DECIMAL SPACES PICK TUCK NIP ( UNLES REPEAT WHILE AGAIN UNTIL BEGIN ELSE THEN IF [RECURSE] [COMPILE] LITERAL NOT FALSE TRUE NEGATE SPACE CR BL ';' ':' '"' '-' 'A' '0' ')' '(' '\n' MOD / EXECUTE CHAR INTERPRET I +LOOP LOOP DO BYE PRSTACK PRHEX TELL LITSTRING 0BRANCH BRANCH ' HIDE HIDDEN IMMEDIATE ; : ] [ , CREATE QUIT BASE S0 LATEST HERE STATE CG C! +! @ ! LIT EXIT INVERT XOR OR AND 0< 0> 0= >= > <= < <> = /MOD * - + 2- 2+ 1- 1+ ?DUP 2SWAP 2DUP 2DROP -ROT ROT OVER DUP SWAP DROP WORD EMIT >CFA FIND NUMBER KEY DSP! DSP@ RSP! RSP@ R> >R F_LENMASK F_HIDDEN F_IMMED DOCOL R0 VERSION 
+whiletest bar foo clearstack SEE CFA> ENDCASE ENDOF OF CASE FORGET WORDS ?IMMEDIATE ?HIDDEN ID. TO >DFA VALUE VARIABLE CELLS ALLOT CONSTANT ." S" C, ALIGN ALIGNED DEPTH WITHIN ? U. . .R U.R UWIDTH .S U. HEX DECIMAL SPACES PICK TUCK NIP ( UNLESS REPEAT WHILE AGAIN UNTIL BEGIN ELSE THEN IF [RECURSE] [COMPILE] LITERAL NOT FALSE TRUE NEGATE SPACE CR BL ';' ':' '"' '-' 'A' '0' ')' '(' '\n' MOD / IN OUT EXECUTE CHAR INTERPRET I +LOOP LOOP DO BYE TELL LITSTRING 0BRANCH BRANCH ' HIDE HIDDEN IMMEDIATE ; : ] [ , CREATE QUIT BASE S0 LATEST HERE STATE CG C! +! @ ! LIT EXIT INVERT XOR OR AND 0< 0> 0= >= > <= < <> = /MOD * - + 2- 2+ 1- 1+ ?DUP 2SWAP 2DUP 2DROP -ROT ROT OVER DUP SWAP DROP WORD EMIT >CFA FIND NUMBER KEY DSP! DSP@ RSP! RSP@ R> >R F_LENMASK F_HIDDEN F_IMMED DOCOL R0 VERSION 
 
 bye
 
