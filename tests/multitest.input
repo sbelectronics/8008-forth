@@ -96,7 +96,7 @@
 
 ( -10 -9 -8 -7 -6 ) : dotest7 -5 -10 DO I . LOOP ; dotest7
 
-( 1 2 3 4 5 2 PICK . .S ) clearstack 1 2 3 4 5 2 PICK . .S
+( 3 5 4 3 2 1  ) clearstack 1 2 3 4 5 2 PICK . .S
 
 words
 
