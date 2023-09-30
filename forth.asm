@@ -34,7 +34,7 @@
 
             cpu 8008new             ; use "new" 8008 mnemonics
 
-forthversion    equ     0100H
+forthversion    equ     0101H
 
 rstackpage      equ     01H
 cur             equ     00H             ; CUR holds the next element in the body to execute
@@ -158,6 +158,11 @@ pushconst       macro v
                 dcr l
                 mvi m,lo(v)             ; store LSB
                 dstackptr_put           ; update dstack pointer
+                endm
+
+skip_ds:        macro                   ; skip one cell one the data stack
+                inr d
+                inr d
                 endm
 
 peek_ba         macro                   ; a=lsb, b=msb
@@ -1068,8 +1073,8 @@ _NUMBER_5:      de_restore
 name_FIND:      db lo(name_NUMBER),hi(name_NUMBER)
                 db 4,'F','I','N','D'
 cw_FIND:        db lo(code_FIND),hi(code_FIND)
-code_FIND:      pop_ba                  ; burn the items on the stack
-                pop_ba                  ; ... we don't care. we only work on wordbuf.
+code_FIND:      skip_ds                 ; burn the items on the stack
+                skip_ds                ; ... we don't care. we only work on wordbuf.
                 call _FIND
                 mov a,l                 ; push HL onto stack
                 mov b,h
@@ -1086,7 +1091,6 @@ _FIND:          de_save
                 ;; on entry to _FIND_WLOOP
                 ;;    DE = pointer to current word
                 ;;    H = rstackpage
-                ;;    B is unused throughout ... spare register!!!
 
 _FIND_WLOOP:    mov a,d                 ; Does DE = 0 ?
                 ora e
@@ -1097,7 +1101,7 @@ _FIND_WLOOP:    mov a,d                 ; Does DE = 0 ?
 
                 mvi l, find_temp        ; save E to find_temp
                 mov m, e
-                mov b, d                ; and E to B
+                mov b, d                ; and D to B
 
                 inr_de                  ; skip the link
                 inr_de
