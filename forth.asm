@@ -56,7 +56,7 @@ here            equ     16H
 latest          equ     18H
 s0              equ     1AH
 base            equ     1CH
-wordstart       equ     1EH             ; Start of current word in FIND
+unused1         equ     1EH
 unused2         equ     20H
 callee          equ     22H             ; Callee points to the codeword of a subroutine to execute
 temp1           equ     24H
@@ -66,7 +66,7 @@ temp4           equ     2AH
 bufhead         equ     2CH
 buftail         equ     2DH
 bufrdy          equ     2EH
-fill3           equ     2FH
+find_temp       equ     2FH
 wordlen         equ     30H             ; wordlen is 1 byte before wordbuf
 wordbuf         equ     31H
 wordbuf_end     equ     50H
@@ -1086,6 +1086,7 @@ _FIND:          de_save
                 ;; on entry to _FIND_WLOOP
                 ;;    DE = pointer to current word
                 ;;    H = rstackpage
+                ;;    B is unused throughout ... spare register!!!
 
 _FIND_WLOOP:    mov a,d                 ; Does DE = 0 ?
                 ora e
@@ -1094,10 +1095,9 @@ _FIND_WLOOP:    mov a,d                 ; Does DE = 0 ?
                 mvi l, wordlen
                 mov c, m                ; read the length
 
-                mvi l, wordstart        ; save DE to wordstart
+                mvi l, find_temp        ; save E to find_temp
                 mov m, e
-                inr l
-                mov m, d
+                mov b, d                ; and E to B
 
                 inr_de                  ; skip the link
                 inr_de
@@ -1127,11 +1127,9 @@ _FIND_CLOOP:    mov h, d
                 ora l
                 jz _FIND_HIT            ; we hit the null terminator, so we matched
 
-_FIND_NOMATCH:  mvi l, wordstart
-                mov a, m
-                inr l
-                mov h, m                ; HL = pointer to last link in current word
-                mov l, a
+_FIND_NOMATCH:  mvi l, find_temp        ; B:find_temp holds wordptr
+                mov l, m
+                mov h, b                ; HL = pointer to last link in current word
 
                 mov e, m                ; DE = pointer to next word
                 inr_hl
@@ -1144,14 +1142,12 @@ _FIND_MATCH:    inr_de                  ; consume the character in DE
                 inr c                   ; consume the character in HC
                 jmp _FIND_CLOOP         ; check next character
 
-_FIND_HIT:      mvi h, rstackpage       ; BA = wordstart
-                mvi l, wordstart
-                mov a,m
-                inr l
-                mov b,m
+_FIND_HIT:      mvi h, rstackpage       ; B:find_temp holds wordptr. Get it into BA
+                mvi l, find_temp
+                mov a, m
                 de_restore
-                mov h,b
-                mov l,a
+                mov h, b
+                mov l, a
                 ret
 
 _FIND_FAIL:     de_restore
