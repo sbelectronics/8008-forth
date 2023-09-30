@@ -56,8 +56,8 @@ here            equ     16H
 latest          equ     18H
 s0              equ     1AH
 base            equ     1CH
-matchptr        equ     1EH
-testptr         equ     20H
+wordstart       equ     1EH             ; Start of current word in FIND
+unused2         equ     20H
 callee          equ     22H             ; Callee points to the codeword of a subroutine to execute
 temp1           equ     24H
 temp2           equ     26H
@@ -67,8 +67,9 @@ bufhead         equ     2CH
 buftail         equ     2DH
 bufrdy          equ     2EH
 fill3           equ     2FH
-wordbuf         equ     30H
-wordbuf_end     equ     4FH
+wordlen         equ     30H             ; wordlen is 1 byte before wordbuf
+wordbuf         equ     31H
+wordbuf_end     equ     50H
 
 rstack_top      equ     0FEH            ; It's easiest to just burn one cell
 
@@ -118,6 +119,13 @@ dstackptr_get   macro
 
 dstackptr_put   macro
                 mov d,l
+                endm
+
+inr_de          macro
+                inr e
+                jnz nowrap
+                inr d
+nowrap:
                 endm
 
 inr_hl          macro
@@ -176,7 +184,7 @@ pop_hl          macro
                 mov l,a
                 endm                
 
-pusb_ba         macro                   ; a=lsb, b=msb
+push_ba         macro                   ; a=lsb, b=msb
                 mvi h,dstackpage
                 dstackptr_get
                 dcr l
@@ -206,7 +214,7 @@ rspop_ba        macro                   ; a=lsb, b=msb
                 rstackptr_put
                 endm
 
-rspusb_ba       macro                   ; a=lsb, b=msb
+rspush_ba       macro                   ; a=lsb, b=msb
                 mvi h,rstackpage
                 rstackptr_get
                 dcr l
@@ -906,7 +914,7 @@ name_TOR:       db lo(name_F_LENMASK), hi(name_F_LENMASK)
                 db 2,'>','R'
 cw_TOR:         db lo(code_TOR), hi(code_TOR)
 code_TOR:       pop_ba
-                rspusb_ba
+                rspush_ba
                 jmp next
 
 
@@ -914,7 +922,7 @@ name_FROMR:     db lo(name_TOR), hi(name_TOR)
                 db 2,'R','>'
 cw_FROMR:       db lo(code_FROMR), hi(code_FROMR)
 code_FROMR:     rspop_ba
-                pusb_ba
+                push_ba
                 jmp next
 
 
@@ -923,7 +931,7 @@ name_RSPFETCH:  db lo(name_FROMR), hi(name_FROMR)
 cw_RSPFETCH:    db lo(code_RSPFETCH), hi(code_RSPFETCH)
 code_RSPFETCH:  mvi b,rstackpage
                 mov a,e
-                pusb_ba
+                push_ba
                 jmp next
 
 
@@ -943,7 +951,7 @@ name_DSPFETCH:  db lo(name_RSPSTORE), hi(name_RSPSTORE)
 cw_DSPFETCH:    db lo(code_DSPFETCH), hi(code_DSPFETCH)
 code_DSPFETCH:  mvi b,dstackpage
                 mov a,d
-                pusb_ba
+                push_ba
                 jmp next
 
 
@@ -963,7 +971,7 @@ name_KEY:       db lo(name_DSPSTORE),hi(name_DSPSTORE)
 cw_KEY:         db lo(code_KEY),hi(code_KEY)
 code_KEY:       call _KEY
                 mvi b,0
-                pusb_ba
+                push_ba
                 jmp next
 _KEY:           jmp buf_read
 
@@ -980,10 +988,10 @@ code_NUMBER:    pop_ba
                 mov a,m
                 inr l
                 mov b,m
-                pusb_ba                  ; push the value
+                push_ba                  ; push the value
                 mvi a,0
                 mvi b,0
-                pusb_ba                  ; number of unparsed characters, 0 = noerror
+                push_ba                  ; number of unparsed characters, 0 = noerror
                 jmp next
 
                 ;; on entry BA is address of buffer, C is count
@@ -1060,86 +1068,95 @@ _NUMBER_5:      de_restore
 name_FIND:      db lo(name_NUMBER),hi(name_NUMBER)
                 db 4,'F','I','N','D'
 cw_FIND:        db lo(code_FIND),hi(code_FIND)
-code_FIND:      pop_ba
-                mov c,a
-                pop_ba
+code_FIND:      pop_ba                  ; burn the items on the stack
+                pop_ba                  ; ... we don't care. we only work on wordbuf.
                 call _FIND
-                mov a,l
+                mov a,l                 ; push HL onto stack
                 mov b,h
-                pusb_ba
+                push_ba
                 jmp next
 
 _FIND:          de_save
-                c_save
-                mvi h,rstackpage        ; store match buffer in rstackpage:matchptr
-                mvi l,matchptr
-                mov m,a
+                mvi h, rstackpage
+                mvi l, latest           ; load latest into DE
+                mov e, m
                 inr l
-                mov m,b
+                mov d, m
 
-                mvi l,latest            ; store latest in rstackpage:testptr
+                ;; on entry to _FIND_WLOOP
+                ;;    DE = pointer to current word
+                ;;    H = rstackpage
+
+_FIND_WLOOP:    mov a,d                 ; Does DE = 0 ?
+                ora e
+                jz _FIND_FAIL           ; we're at the end of the road
+
+                mvi l, wordlen
+                mov c, m                ; read the length
+
+                mvi l, wordstart        ; save DE to wordstart
+                mov m, e
+                inr l
+                mov m, d
+
+                inr_de                  ; skip the link
+                inr_de
+
+                mov h, d
+                mov l, e
+                mov a, m                ; get the length
+                ani (F_HIDDEN|F_LENMASK)
+                cmp c
+                mvi h, rstackpage       ; restore rstackpage to H
+                jnz _FIND_NOMATCH       ; length does not match
+                inr_de                  ; skip over length
+
+                mvi c, wordbuf          ; C will be our index into wordbuf
+_FIND_CLOOP:    mov h, d
+                mov l, e
+                mov a, m                ; A <-- character from word
+                mvi h, rstackpage
+                mov l, c                ; L <-- index of pattern
+                mov l, m                ; L <--- character from pattern
+                cmp l                   ; word.char == pattern.char ?
+                jz _FIND_MATCH
+                xri 20h                 ; flip case bit
+                cmp l                   ; word.char == pattern.char ?
+                jz _FIND_MATCH
+                xra a
+                ora l
+                jz _FIND_HIT            ; we hit the null terminator, so we matched
+
+_FIND_NOMATCH:  mvi l, wordstart
+                mov a, m
+                inr l
+                mov h, m                ; HL = pointer to last link in current word
+                mov l, a
+
+                mov e, m                ; DE = pointer to next word
+                inr_hl
+                mov d, m
+
+                mvi h, rstackpage
+                jmp _FIND_WLOOP
+
+_FIND_MATCH:    inr_de                  ; consume the character in DE
+                inr c                   ; consume the character in HC
+                jmp _FIND_CLOOP         ; check next character
+
+_FIND_HIT:      mvi h, rstackpage       ; BA = wordstart
+                mvi l, wordstart
                 mov a,m
                 inr l
                 mov b,m
-                mvi l,testptr
-                mov m,a
-                inr l
-                mov m,b
-
-_FIND1:         c_restore               ; C = counter
-                mvi h,rstackpage
-                mvi l,matchptr
-                mov e,m
-                inr l
-                mov d,m                 ; DE = matchptr
-
-                mvi h,rstackpage
-                mvi l,testptr
-                mov a,m
-                inr l
-                mov h,m
-                mov l,a                 ; HL = testptr
-                ora h
-                jz _FIND4               ; H=L=0, we're at the end of the road
-
-                consume_hl              ; skip the link
-                consume_hl              ; ... it's two bytes long
-                consume_hl              ; get the length byte
-                ani (F_HIDDEN|F_LENMASK)
-                cmp c
-                jnz _FIND2              ; length does not match
-
-_FIND_CLOOP:    consume_de_safe
-                mov b,a
-                consume_hl              ; XXX could use a cmp m here XXX optimize me XXX
-                cmp b
-                jz _FIND_CASEMATCH      ; we matched with case sensitive
-                xri 20H                 ; flip the case bit
-                cmp b
-                jnz _FIND2              ; failed to match even after inverting case
-_FIND_CASEMATCH:
-                dcr c
-                jnz _FIND_CLOOP
-
-                mvi h,rstackpage
-                mvi l,testptr
-                m_to_ba                 ; BA = testptr
                 de_restore
                 mov h,b
-                mov l,a                 ; HL = testptr
+                mov l,a
                 ret
 
-_FIND2:         mvi h,rstackpage
-                mvi l,testptr
-
-                m_to_hl                 ; HL = (m)
-                m_to_ba                 ; BA = ((m))
-                ba_variable testptr     ; store next word in testptr
-                jmp _FIND1
-
-_FIND4:         de_restore
-                mvi h,0                 ; we failed
-                mvi l,0                 ; these should already be 0, but just to be sure...
+_FIND_FAIL:     de_restore
+                mvi h,0
+                mvi l,0
                 ret
 
 
@@ -1148,7 +1165,7 @@ name_TCFA:      db lo(name_FIND),hi(name_FIND)
 cw_TCFA:        db lo(code_TCFA),hi(code_TCFA)
 code_TCFA:      pop_ba
                 call _TCFA
-                pusb_ba
+                push_ba
                 jmp next
 
 _TCFA:          mov l,a
@@ -1191,7 +1208,7 @@ code_WORD:      call _WORD              ; wordbuf=content, c=length
                 pushconst wordbuf_addr
                 mov a,c                 ; get length from C to A
                 mvi b,0
-                pusb_ba
+                push_ba
                 jmp next
 _WORD:                                  ; Returns data in wordbuf, count in c
 _WORD1:         call _KEY
@@ -1212,6 +1229,9 @@ _WORD2:         mov m,a
                 jz  _WORD2B
                 jmp _WORD2
 _WORD2B:        mvi m,0H                ; null terminate the wordbuf, makes life easier for everyone
+                mvi h,rstackpage
+                mvi l,wordlen
+                mov m,c                 ; store length into wordlen
                 ret
 _WORD3:         call _KEY               ; For comments, eat everything until CR or LF
                 cpi CR
@@ -1240,9 +1260,9 @@ code_SWAP:      pop_ba
                 pop_ba
                 ba_variable temp2
                 variable_ba temp1
-                pusb_ba
+                push_ba
                 variable_ba temp2
-                pusb_ba
+                push_ba
                 jmp next
 
 
@@ -1250,8 +1270,8 @@ name_DUP:       db lo(name_SWAP),hi(name_SWAP)
                 db 3,'D','U','P'
 cw_DUP:         db lo(code_DUP),hi(code_DUP)
 code_DUP:       pop_ba                   ; XXX optimize
-                pusb_ba
-                pusb_ba
+                push_ba
+                push_ba
                 jmp next
 
 
@@ -1265,7 +1285,7 @@ code_OVER:      mvi h,dstackpage
                 mov a,m                 ; get the next element LSB
                 inr l                   ; ... MSB
                 mov b,m
-                pusb_ba
+                push_ba
                 jmp next
 
 
@@ -1279,11 +1299,11 @@ code_ROT:       pop_ba
                 pop_ba
                 ba_variable temp3
                 variable_ba temp2
-                pusb_ba
+                push_ba
                 variable_ba temp1
-                pusb_ba
+                push_ba
                 variable_ba temp3
-                pusb_ba
+                push_ba
                 jmp next
 
 
@@ -1297,11 +1317,11 @@ code_NROT       pop_ba
                 pop_ba
                 ba_variable temp3
                 variable_ba temp1
-                pusb_ba
+                push_ba
                 variable_ba temp3
-                pusb_ba
+                push_ba
                 variable_ba temp2
-                pusb_ba
+                push_ba
                 jmp next
 
 
@@ -1325,9 +1345,9 @@ code_2DUP:      de_save
                 ba_variable temp2
                 de_restore
                 variable_ba temp2
-                pusb_ba
+                push_ba
                 variable_ba temp1
-                pusb_ba
+                push_ba
                 jmp next
 
 
@@ -1343,13 +1363,13 @@ code_2SWAP:     pop_ba
                 pop_ba
                 ba_variable temp4
                 variable_ba temp2
-                pusb_ba
+                push_ba
                 variable_ba temp1
-                pusb_ba
+                push_ba
                 variable_ba temp4
-                pusb_ba
+                push_ba
                 variable_ba temp3
-                pusb_ba
+                push_ba
                 jmp next
 
 
@@ -1361,7 +1381,7 @@ code_QDUP:      peek_ba
                 ora b
                 jz _QDUP1
                 mov a,c
-                pusb_ba
+                push_ba
 _QDUP1:         jmp next
 
 
@@ -1375,7 +1395,7 @@ code_INCR:      pop_ba
                 aci 0
                 mov b,a
                 mov a,c
-                pusb_ba
+                push_ba
                 jmp next
 
 
@@ -1389,7 +1409,7 @@ code_DECR:      pop_ba
                 sbi 0
                 mov b,a
                 mov a,c
-                pusb_ba
+                push_ba
                 jmp next
 
 
@@ -1403,7 +1423,7 @@ code_INCR2:     pop_ba
                 aci 0
                 mov b,a
                 mov a,c
-                pusb_ba
+                push_ba
                 jmp next
 
 
@@ -1417,7 +1437,7 @@ code_DECR2:     pop_ba
                 sbi 0
                 mov b,a
                 mov a,c
-                pusb_ba
+                push_ba
                 jmp next
 
 ;------------------------------------------------------------------------
@@ -1462,7 +1482,7 @@ code_MULT:      e_save
                 mov c,a
                 pop_ba
                 call multfunc
-                pusb_ba
+                push_ba
                 e_restore
                 jmp next
 
@@ -1474,7 +1494,7 @@ code_DIVMOD:    pop_ba                   ; pop divisor
                 pop_ba
                 div16_8
                 push_0c
-                pusb_ba
+                push_ba
                 jmp next
 
 
@@ -1753,7 +1773,7 @@ code_INVERT:    pop_ba                   ; BA = first operand
                 xri 0FFH
                 mov b,a
                 mov a,c
-                pusb_ba
+                push_ba
                 jmp next
 
 
@@ -1791,7 +1811,7 @@ code_LIT:
                 mvi l,cur
                 m_to_hl                 ; HL=(cur)
                 m_to_ba                 ; AB=((cur))
-                pusb_ba                  ; push to data stack
+                push_ba                  ; push to data stack
                 double_inc_cur next     ; cur+=2 and jump to next
 
 
@@ -1821,7 +1841,7 @@ code_FETCH:     pop_ba
                 mov h,b                 ; Set HL to BA
                 mov l,a
                 m_to_ba
-                pusb_ba                  ; push it
+                push_ba                  ; push it
                 jmp next
 
 
@@ -1868,7 +1888,7 @@ code_FETCHBYTE: pop_ba
                 mov l,a
                 mov a,m
                 mvi b,0
-                pusb_ba
+                push_ba
                 jmp next
 
 ;------------------------------------------------------------------------
@@ -2072,7 +2092,7 @@ code_TICK:      mvi h,rstackpage        ; NOTE: identical to the code for LIT
                 mvi l,cur
                 m_to_hl                 ; HL=(cur)
                 m_to_ba                 ; AB=((cur))
-                pusb_ba                  ; push to data stack
+                push_ba                  ; push to data stack
                 double_inc_cur next     ; cur+=2 and jump to next
 
 
@@ -2125,7 +2145,7 @@ code_LITSTRING: variable_ba cur         ; AB = address of length of string
                 mov c,m                 ; C = length of string
                 double_inc_cur _LIT1    ; skip over string length
 _LIT1:          variable_ba cur         ; AB = address of string
-                pusb_ba                  ; push address of string
+                push_ba                  ; push address of string
                 mvi h,rstackpage
                 mvi l,cur
                 mov a,m                 ; get LSB of cur
@@ -2168,14 +2188,14 @@ name_DO:        linklast BYE
                 db 2,'D','O'
 cw_DO:          db lo(code_DO),hi(code_DO)
 code_DO:        pop_ba                   ; initial
-                rspusb_ba                ; push onto return stack
+                rspush_ba                ; push onto return stack
                 mvi a,1
                 mvi b,0
-                rspusb_ba                ; increment
+                rspush_ba                ; increment
                 pop_ba                   ; limit
-                rspusb_ba                ; push onto return stack
+                rspush_ba                ; push onto return stack
                 variable_ba cur
-                rspusb_ba                ; push onto return stack
+                rspush_ba                ; push onto return stack
                 jmp next
 
 name_LOOP:      linklast DO
@@ -2301,7 +2321,7 @@ code_I:         rstackptr_get           ; should be pointing at loop address
                 mov a,m
                 inr l
                 mov b,m
-                pusb_ba
+                push_ba
                 jmp next
 
 
@@ -2311,8 +2331,6 @@ cw_INTERPRET:   db lo(code_INTERPRET),hi(code_INTERPRET)
 
 code_INTERPRET: call _WORD              ; returns word in wordbuf, length in C
                 islit_clear             ; clear islit
-                mvi b,rstackpage        ; _FIND expects address in BA
-                mvi a,wordbuf
                 call _FIND              ; returns address in HL if found
                 mov a,h
                 ora l
@@ -2356,7 +2374,7 @@ _INTERP4:       islit_check
                 jmp_hl_indir
 
 _INTERP5:       variable_ba value
-                pusb_ba
+                push_ba
                 jmp next
 
 _INTERP6:       jmp fault_token;
@@ -2373,7 +2391,7 @@ code_CHAR:      call _WORD
                 mvi l,wordbuf
                 mov a,m
                 mvi b,0
-                pusb_ba
+                push_ba
                 jmp next
 
 
@@ -2425,7 +2443,7 @@ code_IN:        pop_ba
                 mvi m,07H                 ; store the "RET" instruction at jmp_addr+1
                 call jmpa_addr            ; execute the "IN" instruction
                 mvi b,0
-                pusb_ba                    ; save to the stack
+                push_ba                    ; save to the stack
                 jmp next
 
                 include "forth-extra.inc"
