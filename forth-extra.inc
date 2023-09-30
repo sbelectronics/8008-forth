@@ -382,16 +382,16 @@ cw_HEX:         codeword_DOCOL
                 cw store
                 cw EXIT
 
-name_UDOT0:     linklast HEX
-                db 2,'U','.'
-cw_UDOT0:       codeword_DOCOL
+name_UDOTNP:    linklast HEX
+                db 4,'U','.','N','P'
+cw_UDOTNP:      codeword_DOCOL
                 cw BASE
                 cw FETCH
                 cw DIVMOD
                 cw QDUP
                 cw ZBRANCH
                 dw 4H
-                cw UDOT0
+                cw UDOTNP
                 cw DUP
                 cw_lit 0AH
                 cw LT
@@ -407,7 +407,7 @@ cw_UDOT0:       codeword_DOCOL
                 cw EMIT
                 cw EXIT
 
-name_DOTS:      linklast UDOT0
+name_DOTS:      linklast UDOTNP
                 db 2,'.','S'
 cw_DOTS:        codeword_DOCOL
                 cw DSPFETCH
@@ -419,7 +419,7 @@ cw_DOTS:        codeword_DOCOL
                 dw 10H
                 cw DUP
                 cw FETCH
-                cw UDOT0
+                cw UDOTNP
                 cw SPACE
                 cw INCR2
                 cw BRANCH
@@ -453,7 +453,7 @@ cw_UR:          codeword_DOCOL
                 cw SWAP
                 cw SUB
                 cw SPACES
-                cw UDOT0
+                cw UDOTNP
                 cw EXIT
 
 
@@ -487,7 +487,7 @@ cw_DOTR:        codeword_DOCOL
                 dw 06H
                 cw DASHCONST
                 cw EMIT
-                cw UDOT0
+                cw UDOTNP
                 cw EXIT
 
 name_DOT:       linklast DOTR
@@ -502,7 +502,7 @@ cw_DOT:         codeword_DOCOL
 name_UDOT:      linklast DOT
                 db 2,'U','.'
 cw_UDOT:        codeword_DOCOL
-                cw UDOT0
+                cw UDOTNP
                 cw SPACE
                 cw EXIT
 

@@ -77,16 +77,7 @@ buf_read_ret:	mvi l,l_temp
 
 buf_fill:	call CINP		; get a character
 		ani 07FH		; strip off that crazy scelbi high bit
-
-		cpi 07FH		; Is it DEL ?
-		jnz notdel		
-		mvi a,08H		; DEL is annoying. On my terminal it prints a blank space.
-		call _EMIT		; So, backspace over the DEL
-		mvi a,08H
-		call _EMIT		; ... and print the BS we should have printed
-		mvi a,08H		; ... and turn it into a BS
-
-notdel:		cpi 08H
+		cpi 08H
 		jz buf_backspace	; handle backspace
 		buf_enqueue		; store character in buffer
 		cpi LINETERM
