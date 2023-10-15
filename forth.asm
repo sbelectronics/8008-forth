@@ -34,7 +34,7 @@
 
             cpu 8008new             ; use "new" 8008 mnemonics
 
-forthversion    equ     0101H
+forthversion    equ     0102H
 
 rstackpage      equ     01H
 cur             equ     00H             ; CUR holds the next element in the body to execute
@@ -1122,14 +1122,14 @@ _FIND_CLOOP:    mov h, d
                 mvi h, rstackpage
                 mov l, c                ; L <-- index of pattern
                 mov l, m                ; L <--- character from pattern
+                inr l                   ; L = L + 1 - 1 ... checks to see if L is zero
+                dcr l
+                jz _FIND_HIT            ; we hit the null terminator, so we matched
                 cmp l                   ; word.char == pattern.char ?
                 jz _FIND_MATCH
                 xri 20h                 ; flip case bit
                 cmp l                   ; word.char == pattern.char ?
                 jz _FIND_MATCH
-                xra a
-                ora l
-                jz _FIND_HIT            ; we hit the null terminator, so we matched
 
 _FIND_NOMATCH:  mvi l, find_temp        ; B:find_temp holds wordptr
                 mov l, m
@@ -2308,6 +2308,9 @@ code_PLUSLOOP:  pop_ba
                 mov m,b
                 jmp code_LOOP
 
+                ;; Note: I and J as implemented below only work when there are no intermediate
+                ;; calls between I/J and the cooresponding DO.
+
 name_I:         linklast PLUSLOOP
                 db 1,'I'
 cw_I:           db lo(code_I),hi(code_I)
@@ -2324,8 +2327,21 @@ code_I:         rstackptr_get           ; should be pointing at loop address
                 push_ba
                 jmp next
 
+name_J:         linklast I
+                db 1,'J'
+cw_J:           db lo(code_J),hi(code_J)
+code_J:         rstackptr_get           ; should be pointing at loop address
+                mov a,l
+                adi 0EH
+                mov l,a
+                mov a,m
+                inr l
+                mov b,m
+                push_ba
+                jmp next
 
-name_INTERPRET: linklast I
+
+name_INTERPRET: linklast J
                 db 9,'I','N','T','E','R','P','R','E','T'
 cw_INTERPRET:   db lo(code_INTERPRET),hi(code_INTERPRET)
 
