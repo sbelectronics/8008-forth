@@ -35,10 +35,12 @@ rts_off     macro
 ; INITTAPE: initialize tape
 ;-----------------------------------------------------------------------------------------
 
-SINIT8251:  mvi a,h8_cons_d         ; configure IO mapper
+SINIT8251:  ifndef noiomap
+            mvi a,h8_cons_d         ; configure IO mapper
             out mm_io2
             mvi a,h8_cons_c
             out mm_io3
+            endif
 
             mvi a,000H              ; worst case initialization
             out cons_cmd            ; configure sync more
@@ -74,12 +76,6 @@ TXWCONS:    in cons_stat
 
             mov a,b                 ; restore character
             out cons_thr
-            ret
-
-CPWAIT8251:
-TXWCONS3:   in cons_stat
-            ani 1
-            jz TXWCONS3              ; loop while tx busy
             ret
 
 ;-----------------------------------------------------------------------------------------       
