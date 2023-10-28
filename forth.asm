@@ -2443,8 +2443,6 @@ code_OUT:       pop_ba                   ; get the port address into A
                 call jmpa_addr
                 jmp next
 
-
-LASTWORD_KERNEL:
 name_IN:        linklast OUT
                 db 2,"IN"
 cw_IN:          db lo(code_IN),hi(code_IN)
@@ -2461,6 +2459,28 @@ code_IN:        pop_ba
                 mvi b,0
                 push_ba                    ; save to the stack
                 jmp next
+
+LASTWORD_KERNEL:
+name_DELAY:     linklast IN
+                db 5,"DELAY"
+cw_DELAY:       db lo(code_DELAY),hi(code_DELAY)
+code_DELAY:     pop_ba                   ; get the port address into A
+                mov c,a
+delay_ms:
+                mvi l,0BH
+delay_inner:    dcr l
+                jnz delay_inner
+                nop
+
+                dcr c
+                jnz delay_nowrap
+
+                mov a,c
+                ora b
+                jz next
+
+                dcr b
+delay_nowrap:   jmp delay_ms
 
                 include "forth-extra.inc"
 
