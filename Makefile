@@ -7,7 +7,7 @@ INCDEPS=lib/*.inc *.inc
 SIMH=/home/smbaker/projects/pi/simh/BIN/scelbi
 IGNORE='Bytes loaded\|git commit\|HALT instruction'
 
-all: out/forth-16450.bin out/forth-scelbi.bin out/forth-bitbang.bin out/forth-8251.bin out/forth-16450-h9term.bin
+all: out/forth-16450.bin out/forth-scelbi.bin out/forth-bitbang.bin out/forth-8251.bin out/forth-16450-h9term.bin out/forth-8251-h9term.bin
 
 out/forth-16450.bin: $(INCDEPS) forth.asm
 	mkdir -p out
@@ -34,6 +34,11 @@ out/forth-16450-h9term.bin: $(INCDEPS) forth.asm
 	mkdir -p out
 	$(ASL) -i $(INC) -cpu 8008 -L forth.asm -o out/forth-16450-h9term.p -D ser16450 -D forceupper -D baud600
 	$(P2BIN) out/forth-16450-h9term.p out/forth-16450-h9term.bin
+
+out/forth-8251-h9term.bin: $(INCDEPS) forth.asm
+	mkdir -p out
+	$(ASL) -i $(INC) -cpu 8008 -L forth.asm -o out/forth-8251-h9term.p -D ser8251 -D forceupper -D baud600
+	$(P2BIN) out/forth-8251-h9term.p out/forth-8251-h9term.bin
 
 test: multitest
 
